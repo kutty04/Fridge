@@ -1,146 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FridgeMind 🍅🥛</title>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #ffe6f0, #e6f7ff);
-      padding: 20px;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #ff6699;
-    }
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      width: 100%;
-      font-size: 1em;
-    }
-    button {
-      background: #ff99cc;
-      border: none;
-      cursor: pointer;
-      color: white;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #ff66aa;
-    }
-    .item {
-      background: #f9f9f9;
-      border-radius: 10px;
-      padding: 10px;
-      margin-top: 10px;
-    }
-    .near-expiry {
-      color: red;
-      font-weight: bold;
-      font-size: 0.9em;
-    }
-    .recipe-suggestion {
-      font-style: italic;
-      font-size: 0.85em;
-      color: #666;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FridgeMind — Scan & Track</title>
+<style>
+  :root{
+    --pink:#ffb6c1; --pink-d:#ff9eb3; --warn-bg:#ffd1dc;
+    --card:#fff; --shadow:0 4px 14px rgba(0,0,0,0.08);
+  }
+  body{
+    margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background: linear-gradient(135deg,#ffe7f0 0%,#e7f6ff 100%);
+    color:#333; padding:24px;
+  }
+  h1{ text-align:center; margin:6px 0 18px; color:#ff6f9a; }
+  .wrap{ max-width:720px; margin:0 auto; }
+  .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  input[type="text"], input[type="date"]{
+    padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
+  }
+  .file-wrap{ display:flex; gap:8px; align-items:center; width:100%; }
+  .file-input{ flex:1; padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; }
+  button{
+    background:var(--pink); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+  }
+  button.secondary{ background:#fff; color:#333; border:1px solid #f3dbe2; }
+  button:disabled{ opacity:.6; transform:none; cursor:default; }
+  .items{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+  .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
+  .name{ font-weight:700; font-size:15px; }
+  .expiry{ color:#666; font-size:14px; }
+  .badge{ background:var(--warn-bg); color:#9b1b2b; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+  .suggest{ font-size:13px; color:#666; font-style:italic; }
+  .used-btn{ background:var(--pink); color:#fff; border-radius:999px; padding:8px 14px; border:none; cursor:pointer; }
+  .used-card{ background:#dff3e9 !important; }
+  .note{ margin-top:8px; font-size:13px; color:#666; }
+  .small{ font-size:12px; color:#777; }
+  .loading-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#fff; margin-left:8px; box-shadow:12px 0 0 rgba(255,255,255,.3); vertical-align:middle; animation: blink 1s infinite; }
+  @keyframes blink{ 0%{opacity:1}50%{opacity:.4}100%{opacity:1} }
+  .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
+</style>
 </head>
 <body>
-  <h1>FridgeMind 🍅🥛</h1>
-  <div class="container">
-    <input type="text" id="itemName" placeholder="Enter item name 🥕" />
-    <input type="date" id="expiryDate" />
-    <button onclick="addItem()">➕ Add Item</button>
-    <input type="file" accept="image/*" capture="camera" onchange="scanImage(event)" />
-    <div id="itemList"></div>
+  <div class="wrap">
+    <h1>🥕 FridgeMind — Scan & Track</h1>
+
+    <div class="card">
+      <div style="display:flex;gap:10px;flex-direction:column;">
+        <div class="row">
+          <input id="itemName" type="text" placeholder="Enter item name (or scan) 🍅" />
+          <input id="expiryDate" type="date" />
+          <button id="addBtn">➕ Add</button>
+        </div>
+
+        <div class="row" style="margin-top:8px;">
+          <!-- file input (styled) -->
+          <div class="file-wrap" style="flex:1;">
+            <input id="fileInput" class="file-input" type="file" accept="image/*" />
+          </div>
+          <!-- scan button -->
+          <button id="scanBtn" title="Scan uploaded image">📷 Scan</button>
+        </div>
+
+        <div class="note small">Upload/take a photo ➜ click <strong>Scan</strong> to detect item (Google Vision). Then set expiry and Add. </div>
+      </div>
+    </div>
+
+    <div class="items" id="itemList"></div>
   </div>
 
-  <script>
-    const API_KEY = "AIzaSyAVdhr4MWMZzDdTSWspMy6SMs4pa7o6-tQ"; // Put your Google Cloud Vision API Key here
+<script>
+/* ---- CONFIG ---- */
+const API_KEY = "AIzaSyAVdhr4MWMZzDdTSWspMy6SMs4pa7o6-tQ"; // <-- put your key here (frontend mode)
+const CONFIDENCE_THRESHOLD = 0.45; // label confidence threshold (lower broadens matches)
 
-    const recipes = {
-      "tomato": ["🍅 Make Tomato Chutney", "🍅 Make Tomato Rice", "🍅 Make Tomato Curry"],
-      "milk": ["🥛 Make Paneer", "🥛 Make Kheer", "🥛 Make Curd"],
-      "bread": ["🍞 Make Bread Upma", "🍞 Make Sandwich", "🍞 Make Bread Pakora"]
+/* ---- Pantry map + synonyms (used to map fuzzy labels to canonical items + emoji) ---- */
+const pantry = {
+  "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"] },
+  "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"] },
+  "potato":   { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"] },
+  "carrot":   { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"] },
+  "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"] },
+  "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"] },
+  "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"] },
+  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"] },
+  "paneer":   { emoji:"🧀", recipes:["Paneer Butter Masala","Palak Paneer"] },
+  "garlic":   { emoji:"🧄", recipes:["Garlic Chutney","Garlic Pickle"] },
+  "ginger":   { emoji:"🌱", recipes:["Ginger Tea","Ginger Chutney"] },
+  "banana":   { emoji:"🍌", recipes:["Banana Halwa","Banana Smoothie"] },
+  "mango":    { emoji:"🥭", recipes:["Mango Lassi","Aamras"] },
+  "beans":    { emoji:"🫘", recipes:["Beans Poriyal","Beans Curry"] },
+  "brinjal":  { emoji:"🍆", recipes:["Baingan Bharta","Brinjal Curry"] },
+  "cauliflower": { emoji:"🌸", recipes:["Aloo Gobi","Gobi Masala"] },
+  "cabbage":  { emoji:"🥬", recipes:["Cabbage Poriyal","Cabbage Curry"] },
+  "chilli":   { emoji:"🌶️", recipes:["Mirchi Bajji","Chilli Pickle"] },
+  "coconut":  { emoji:"🥥", recipes:["Coconut Chutney","Thengai Sadam"] },
+  "dal":      { emoji:"🍲", recipes:["Dal Tadka","Sambar"] },
+  "tamarind": { emoji:"🟤", recipes:["Puliyodarai","Imli Chutney"] },
+  "wheat flour": { emoji:"🫓", recipes:["Chapati","Paratha"] }
+};
+
+/* synonyms / aliases that Vision might return */
+const aliases = {
+  "tomatoes":"tomato","roma tomato":"tomato","cherry tomato":"tomato","vine tomato":"tomato",
+  "potatoes":"potato","spud":"potato","aloo":"potato",
+  "capsicum":"chilli","bell pepper":"chilli","green pepper":"chilli",
+  "aubergine":"brinjal","eggplant":"brinjal",
+  "cauli":"cauliflower","cauliflower head":"cauliflower",
+  "yogurt":"curd","yoghurt":"curd","curds":"curd","dahi":"curd",
+  "lentil":"dal","masoor":"dal","toor dal":"dal","moong":"dal",
+  "bottle gourd":"lauki"
+};
+
+/* ----- UI helpers ----- */
+const fileInput = document.getElementById('fileInput');
+const scanBtn = document.getElementById('scanBtn');
+const itemNameInput = document.getElementById('itemName');
+const expiryInput = document.getElementById('expiryDate');
+const addBtn = document.getElementById('addBtn');
+const itemList = document.getElementById('itemList');
+
+let lastSelectedFile = null;
+
+fileInput.addEventListener('change', (e)=>{
+  lastSelectedFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+});
+
+/* Toast */
+let toastTimeout = null;
+function showToast(msg){
+  if(toastTimeout) clearTimeout(toastTimeout);
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  toastTimeout = setTimeout(()=>{ t.remove(); toastTimeout = null; }, 2500);
+}
+
+/* ----- Matching logic ----- */
+function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
+
+/* tries to find a pantry key from a label (fuzzy): exact, alias, partial includes */
+function findPantryKeyFromLabel(label){
+  if(!label) return null;
+  const L = normalize(label);
+  if(aliases[L]) return aliases[L];
+  if(pantry[L]) return L;
+  // partial include checks: label contains key or key contains label
+  for(const key of Object.keys(pantry)){
+    if(L.includes(key)) return key;
+    if(key.includes(L)) return key;
+    // check first word matches (helps if label is "roma tomato", key "tomato")
+    const firstWord = L.split(/\s+/)[0];
+    if(key.includes(firstWord)) return key;
+  }
+  return null;
+}
+
+/* Uses returned labelAnnotations (with score) and text detection to pick best match */
+function pickBestMatch(labelAnnotations = [], fullText = ""){
+  // labelAnnotations: [{description, score}, ...]
+  const labels = (labelAnnotations || []).map(l => ({ desc: normalize(l.description), score: l.score || 0 }));
+  // sort by score desc
+  labels.sort((a,b)=>b.score - a.score);
+
+  // First pass: try to map label -> pantry key using findPantryKeyFromLabel (with confidence check)
+  for(const lab of labels){
+    // If label is specific enough and has a decent score, try map
+    const mapped = findPantryKeyFromLabel(lab.desc);
+    if(mapped && lab.score >= CONFIDENCE_THRESHOLD) return { key:mapped, source:lab.desc, score:lab.score };
+  }
+
+  // Second pass: try any mapping ignoring score (useful for low-confidence but correct)
+  for(const lab of labels){
+    const mapped = findPantryKeyFromLabel(lab.desc);
+    if(mapped) return { key:mapped, source:lab.desc, score:lab.score };
+  }
+
+  // Third: try to parse any useful word from OCR text (text detection)
+  if(fullText){
+    // take words and try to map
+    const tokens = fullText.split(/\s+/).map(t=>normalize(t)).filter(Boolean);
+    for(const t of tokens){
+      const mapped = findPantryKeyFromLabel(t);
+      if(mapped) return { key:mapped, source:t, score:0 };
+    }
+  }
+
+  // fallback: take top label's description (no emoji)
+  const top = labels[0];
+  if(top) return { key:null, source: top.desc, score: top.score };
+  return { key:null, source: null, score:0 };
+}
+
+/* ----- Vision API call (frontend) ----- */
+async function callVisionApi(base64Image){
+  if(!API_KEY || API_KEY === "AIzaSyAVdhr4MWMZzDdTSWspMy6SMs4pa7o6-tQ"){
+    throw new Error("Vision API key missing. Replace API_KEY in script.");
+  }
+  const body = {
+    requests: [{
+      image: { content: base64Image },
+      features: [
+        { type: "LABEL_DETECTION", maxResults: 10 },
+        { type: "TEXT_DETECTION", maxResults: 1 }
+      ]
+    }]
+  };
+
+  const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${API_KEY}`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    const txt = await res.text();
+    throw new Error('Vision API error: ' + txt);
+  }
+  return await res.json();
+}
+
+/* Convert File -> base64 content (no header) */
+function fileToBase64NoPrefix(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> {
+      const dataUrl = r.result.toString();
+      const base64 = dataUrl.split(',')[1];
+      resolve(base64);
     };
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 
-    function addItem(name, expiry) {
-      const itemName = name || document.getElementById('itemName').value.trim();
-      const expiryDate = expiry || document.getElementById('expiryDate').value;
-      if (!itemName || !expiryDate) return;
-
-      const today = new Date();
-      const expDate = new Date(expiryDate);
-      const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-
-      let nearExpiryText = "";
-      let recipeText = "";
-      if (diffDays <= 3) {
-        nearExpiryText = `⚠️ Near expiry in ${diffDays} days!`;
-        const lowerName = itemName.toLowerCase();
-        if (recipes[lowerName]) {
-          const suggestion = recipes[lowerName][Math.floor(Math.random() * recipes[lowerName].length)];
-          recipeText = suggestion;
-        }
-      }
-
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.innerHTML = `<strong>${itemName}</strong><br>
-        <span class="near-expiry">${nearExpiryText}</span><br>
-        <span class="recipe-suggestion">${recipeText}</span>`;
-      document.getElementById('itemList').appendChild(div);
-
-      document.getElementById('itemName').value = '';
-      document.getElementById('expiryDate').value = '';
+/* ----- Scan button handler ----- */
+scanBtn.addEventListener('click', async ()=>{
+  if(!lastSelectedFile){ showToast("Choose/take a photo first"); return; }
+  scanBtn.disabled = true;
+  scanBtn.textContent = 'Scanning…';
+  try{
+    const b64 = await fileToBase64NoPrefix(lastSelectedFile);
+    const json = await callVisionApi(b64);
+    const resp = json?.responses?.[0] || {};
+    const labelAnnotations = resp.labelAnnotations || [];
+    const fullText = resp.textAnnotations?.[0]?.description || "";
+    // pick best match
+    const match = pickBestMatch(labelAnnotations, fullText);
+    if(match.key){
+      // known pantry -> fill emoji + proper name
+      const pretty = match.key.charAt(0).toUpperCase() + match.key.slice(1);
+      itemNameInput.value = `${pantry[match.key].emoji} ${pretty}`;
+      showToast(`Detected: ${pretty}`);
+    } else if (match.source){
+      // fallback to top label (no emoji)
+      const pretty = match.source.split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      itemNameInput.value = pretty;
+      showToast(`Detected: ${pretty}`);
+    } else if (fullText){
+      itemNameInput.value = fullText.split('\n')[0];
+      showToast('Detected text from image');
+    } else {
+      showToast("Couldn't detect a usable label.");
     }
+  } catch(err){
+    console.error(err);
+    showToast("Scan failed — check API key & network (see console).");
+  } finally {
+    scanBtn.disabled = false;
+    scanBtn.textContent = '📷 Scan';
+  }
+});
 
-    function scanImage(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+/* ----- Add item UI + recipe suggestion ----- */
+addBtn.addEventListener('click', addItem);
+function addItem(){
+  const raw = (itemNameInput.value || "").trim();
+  const expiry = expiryInput.value;
+  if(!raw || !expiry){ showToast("Enter name & expiry"); return; }
 
-      const reader = new FileReader();
-      reader.onloadend = function () {
-        const imgBase64 = reader.result.replace(/^data:image\/(png|jpeg);base64,/, '');
-        fetch(`https://vision.googleapis.com/v1/images:annotate?key=${API_KEY}`, {
-          method: "POST",
-          body: JSON.stringify({
-            requests: [
-              {
-                image: { content: imgBase64 },
-                features: [{ type: "LABEL_DETECTION", maxResults: 5 }]
-              }
-            ]
-          })
-        })
-        .then(res => res.json())
-        .then(data => {
-          console.log(data);
-          const labels = data.responses[0].labelAnnotations;
-          if (labels && labels.length > 0) {
-            document.getElementById('itemName').value = labels[0].description;
-          } else {
-            alert("Could not detect any item.");
-          }
-        })
-        .catch(err => console.error("Vision API error:", err));
-      };
-      reader.readAsDataURL(file);
+  // determine pantry key (if present) from raw (strip emoji first if any)
+  let cleaned = raw;
+  // remove leading emoji if it matches a pantry emoji
+  for(const k of Object.keys(pantry)) {
+    const em = pantry[k].emoji;
+    if(cleaned.startsWith(em + ' ')) cleaned = cleaned.slice(em.length+1).trim();
+  }
+  // attempt to find key by raw text
+  const keyTry = findPantryKeyFromLabel(cleaned.toLowerCase()) || null;
+
+  const dleft = daysUntil(expiry);
+  const card = document.createElement('div');
+  card.className = 'item-card';
+
+  const info = document.createElement('div');
+  info.className = 'info';
+
+  if(dleft <= 3){
+    const b = document.createElement('div');
+    b.className = 'badge';
+    b.textContent = `⚠️ Near Expiry (${dleft}d)`;
+    info.appendChild(b);
+  }
+
+  const nameLine = document.createElement('div');
+  nameLine.className = 'name';
+  const emoji = keyTry ? pantry[keyTry].emoji : (raw.match(/^\p{Emoji}/u) ? "" : "");
+  const displayName = (raw.startsWith(emoji) || emoji === "") ? raw : `${emoji} ${cleaned.charAt(0).toUpperCase()+cleaned.slice(1)}`;
+  nameLine.textContent = displayName;
+  info.appendChild(nameLine);
+
+  const expiryLine = document.createElement('div');
+  expiryLine.className = 'expiry';
+  expiryLine.textContent = `Expiry: ${expiry}`;
+  info.appendChild(expiryLine);
+
+  if(dleft <= 3){
+    // recipe suggestion if pantry item known
+    if(keyTry){
+      const pool = pantry[keyTry].recipes;
+      const pick = pool[Math.floor(Math.random()*pool.length)];
+      const q = encodeURIComponent(`${pick} recipe`);
+      const link = `https://www.youtube.com/results?search_query=${q}`;
+      const s = document.createElement('div');
+      s.className = 'suggest';
+      s.innerHTML = `🍳 Suggestion: <a href="${link}" target="_blank" rel="noopener">${pick}</a>`;
+      info.appendChild(s);
+    } else {
+      // if unknown, optionally show top generic suggestion
+      const s = document.createElement('div');
+      s.className = 'suggest';
+      s.textContent = `🍳 Tip: Use it soon — search recipes for "${cleaned}"`;
+      info.appendChild(s);
     }
-  </script>
+  }
+
+  const button = document.createElement('button');
+  button.className = 'used-btn';
+  button.textContent = '✅ Used';
+  button.addEventListener('click', ()=>{
+    card.classList.add('used-card');
+    info.innerHTML = `${displayName} 🌟 Used!`;
+    button.remove();
+  });
+
+  card.appendChild(info);
+  card.appendChild(button);
+  itemList.prepend(card);
+
+  // clear
+  itemNameInput.value = '';
+  expiryInput.value = '';
+  fileInput.value = '';
+  lastSelectedFile = null;
+}
+
+/* date helper */
+function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function daysUntil(dateStr){
+  const t = stripTime(new Date());
+  const e = new Date(dateStr);
+  if(isNaN(e)) return Infinity;
+  return Math.ceil((e - t) / (1000*60*60*24));
+}
+
+/* Enter key quick add */
+itemNameInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') addItem(); });
+expiryInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') addItem(); });
+
+</script>
 </body>
 </html>
