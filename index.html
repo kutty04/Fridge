@@ -137,6 +137,7 @@ const testNotifBtn = document.getElementById('testNotifBtn');
 const analyticsPanel = document.getElementById('analyticsPanel');
 const analyticsContent = document.getElementById('analyticsContent');
 const dailyRemindersDiv = document.getElementById('dailyReminders');
+const toggleAnalytics = document.getElementById('toggleAnalytics');
 const homeBtn = document.getElementById('homeBtn');
 const trashBtn = document.getElementById('trashBtn');
 const expiryBtn = document.getElementById('expiryBtn');
@@ -151,19 +152,12 @@ let trash = [];
 // Toggle sidebar
 toggleMenu.addEventListener('click', ()=> sidebar.classList.toggle('show'));
 
-// Toggle analytics panel
-analyticsBtn.addEventListener('click', ()=>{
-  analyticsPanel.style.display = analyticsPanel.style.display==='flex'?'none':'flex';
-  updateAnalytics();
-});
-
 // Notification
 testNotifBtn.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
-    const notif = new Notification("FridgeMind Test", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
-    const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
-    audio.play();
+    new Notification("FridgeMind Test", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
+    new Audio('https://www.soundjay.com/button/beep-07.wav').play();
   }
 });
 
@@ -206,73 +200,46 @@ function addItem(itemData){
   if(!itemData){ itemNameInput.value=''; expiryInput.value=''; }
 }
 
-// Render individual card with recipe links for near-expiry
+// Render individual card
 function renderItem(obj){
   const dleft = daysUntil(obj.expiry);
-  const card = document.createElement('div'); 
-  card.className='item-card';
-  const info = document.createElement('div'); 
-  info.className='info';
-
-  if(dleft <= 3){ 
-    const b = document.createElement('div'); 
-    b.className='badge'; 
-    b.textContent = `⚠️ Near Expiry (${dleft}d)`; 
-    info.appendChild(b);
-
-    const notifKey = obj.key || obj.name.toLowerCase();
-    const lastNotif = localStorage.getItem('notif_'+notifKey);
-    const today = new Date().toISOString().split('T')[0];
+  const card = document.createElement('div'); card.className='item-card';
+  const info = document.createElement('div'); info.className='info';
+  if(dleft<=3){ 
+    const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);
+    const notifKey=obj.key||obj.name.toLowerCase();
+    const lastNotif=localStorage.getItem('notif_'+notifKey);
+    const today=new Date().toISOString().split('T')[0];
     if(Notification.permission==='granted' && lastNotif!==today){
-      new Notification("FridgeMind Alert",{
-        body: `${obj.name} is near expiry!`,
-        icon: "https://i.imgur.com/8QfU5Yq.png"
-      });
-      localStorage.setItem('notif_'+notifKey, today);
+      new Notification("FridgeMind Alert",{body:`${obj.name} is near expiry!`,icon:"https://i.imgur.com/8QfU5Yq.png"});
+      localStorage.setItem('notif_'+notifKey,today);
     }
   }
-
-  const nameLine = document.createElement('div'); 
-  nameLine.className='name'; 
-  nameLine.textContent = obj.name; 
-  info.appendChild(nameLine);
-
-  const expiryLine = document.createElement('div'); 
-  expiryLine.className='expiry'; 
-  expiryLine.textContent = `Expiry: ${obj.expiry}`; 
-  info.appendChild(expiryLine);
-
-  // Recipe links for near-expiry items
-  if(dleft <= 3 && obj.key && pantry[obj.key] && pantry[obj.key].recipes.length > 0){
-    pantry[obj.key].recipes.forEach(r => {
+  const nameLine = document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
+  
+  // Recipe links if near expiry & has pantry recipes
+  if(obj.key && pantry[obj.key] && dleft<=3){
+    pantry[obj.key].recipes.forEach(r=>{
       const link = document.createElement('a');
-      link.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(r)}`;
-      link.target = "_blank";
-      link.textContent = r;
-      link.style.display = "block";
-      link.style.color = "#9B59B6"; // pastel purple
-      link.style.textDecoration = "underline";
+      link.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(r)}`;
+      link.target="_blank"; link.className="suggest";
+      link.textContent=r;
       info.appendChild(link);
     });
   }
 
+  const expiryLine = document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
   card.appendChild(info);
 
-  const delBtn = document.createElement('button'); 
-  delBtn.className='delete-btn'; 
-  delBtn.textContent='🗑️ Delete';
-  delBtn.addEventListener('click', ()=>{
-    card.remove(); 
-    trash.push(obj); 
-    showToast(`${obj.name} moved to Trash`); 
-    updateAnalytics();
-  });
+  // Delete button
+  const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
+  delBtn.addEventListener('click', ()=>{ card.remove(); trash.push(obj); showToast(`${obj.name} moved to Trash`); updateAnalytics(); });
   card.appendChild(delBtn);
 
   itemList.prepend(card);
 }
 
-// Update Analytics + Daily reminders + Chart
+// Update Analytics
 function updateAnalytics(){
   const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
   const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
@@ -309,11 +276,10 @@ function updateAnalytics(){
     dailyRemindersDiv.appendChild(rem);
   });
 
-  // Render chart
   renderAnalyticsChart(todayCount, weekCount, expiredCount);
 }
 
-// Chart
+// Analytics chart
 let chartInstance=null;
 function renderAnalyticsChart(today, week, expired){
   const ctx = document.getElementById('analyticsChart').getContext('2d');
@@ -328,27 +294,67 @@ function renderAnalyticsChart(today, week, expired){
   });
 }
 
-// Trash view
-trashBtn.addEventListener('click', ()=>{
-  itemList.innerHTML='';
-  trash.forEach(t=>{
-    const card = document.createElement('div'); card.className='item-card';
-    card.innerHTML=`<div class="info"><div class="name">${t.name}</div><div class="expiry">Expiry: ${t.expiry}</div></div>`;
-    const restoreBtn = document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
-    restoreBtn.addEventListener('click', ()=>{
-      addItem(t); trash = trash.filter(x=>x!==t); card.remove();
-    });
-    card.appendChild(restoreBtn);
-    itemList.appendChild(card);
-  });
+// Sidebar buttons
+homeBtn.addEventListener('click', ()=>{ renderList(allItems); analyticsPanel.style.display='none'; });
+trashBtn.addEventListener('click', ()=>{ renderList(trash,true); analyticsPanel.style.display='none'; });
+expiryBtn.addEventListener('click', ()=>{ renderList(allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i))); analyticsPanel.style.display='none'; });
+recipesBtn.addEventListener('click', ()=>{ renderList(allItems.filter(i=>i.key && daysUntil(i.expiry)<=3 && !trash.includes(i)), false, true); analyticsPanel.style.display='none'; });
+categoriesBtn.addEventListener('click', ()=>{ categorySubmenu.style.display = categorySubmenu.style.display==='flex'? 'none':'flex'; });
+categorySubmenu.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ 
+  const cat = b.dataset.cat; 
+  renderList(allItems.filter(i=>i.key && pantry[i.key] && pantry[i.key].category===cat && !trash.includes(i))); 
+  analyticsPanel.style.display='none';
+}));
+analyticsBtn.addEventListener('click', ()=>{ analyticsPanel.style.display = analyticsPanel.style.display==='flex'? 'none':'flex'; });
+
+// Toggle analytics collapse
+toggleAnalytics.addEventListener('click', ()=>{
+  analyticsContent.style.display = analyticsContent.style.display==='flex'? 'none':'flex';
 });
 
-// Category toggle
-categoriesBtn.addEventListener('click', ()=> categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex');
+// Render generic list
+function renderList(list, isTrash=false, showRecipes=false){
+  itemList.innerHTML='';
+  list.forEach(obj=>{
+    const dleft = daysUntil(obj.expiry);
+    const card = document.createElement('div'); card.className='item-card';
+    const info = document.createElement('div'); info.className='info';
+    if(!isTrash && dleft<=3){ const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b); }
+    const nameLine = document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
+
+    if(showRecipes && obj.key && pantry[obj.key] && dleft<=3){
+      pantry[obj.key].recipes.forEach(r=>{
+        const link = document.createElement('a');
+        link.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(r)}`;
+        link.target="_blank"; link.className="suggest";
+        link.textContent=r;
+        info.appendChild(link);
+      });
+    }
+
+    const expiryLine = document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
+    card.appendChild(info);
+
+    if(isTrash){
+      const restoreBtn = document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
+      restoreBtn.addEventListener('click', ()=>{ trash = trash.filter(t=>t!==obj); addItem(obj); card.remove(); showToast(`${obj.name} restored!`); });
+      card.appendChild(restoreBtn);
+    } else{
+      const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
+      delBtn.addEventListener('click', ()=>{ card.remove(); trash.push(obj); showToast(`${obj.name} moved to Trash`); updateAnalytics(); });
+      card.appendChild(delBtn);
+    }
+    itemList.appendChild(card);
+  });
+}
+
+// Init
+updateAnalytics();
 
 </script>
 </body>
 </html>
+
 
 
 
