@@ -49,12 +49,14 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .suggest{ font-size:13px; color:#666; font-style:italic; }
 .small{ font-size:12px; color:#777; }
 .toast{ position:fixed; top:20px; right:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; opacity:0.95; }
-.toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:11; }
+.toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:12; }
+#notifBtnTop{ position:fixed; top:20px; right:20px; background:var(--mint); color:#333; border:1px solid #f3dbe2; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; z-index:12; }
 </style>
 </head>
 <body>
 
 <button class="toggle-menu">☰ Menu</button>
+<button id="notifBtnTop">🔔 Test Notification</button>
 
 <div class="sidebar" id="sidebar">
   <button id="homeBtn">🏠 Home / Dashboard</button>
@@ -62,7 +64,6 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
   <button id="expiryBtn">⚠️ Near Expiry</button>
   <button id="recipesBtn">🍳 Recipe Suggestions</button>
   <button id="trashBtn" class="delete">🗑️ Trash / Deleted Items</button>
-  <button id="testNotifBtn" class="secondary">🔔 Test Notification</button>
 </div>
 
 <div class="main" id="mainContent">
@@ -101,7 +102,7 @@ const itemNameInput = document.getElementById('itemName');
 const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
-const testNotifBtn = document.getElementById('testNotifBtn');
+const notifBtnTop = document.getElementById('notifBtnTop');
 
 /* Toggle sidebar & push content */
 toggleMenu.addEventListener('click', ()=>{
@@ -109,8 +110,8 @@ toggleMenu.addEventListener('click', ()=>{
   mainContent.classList.toggle('shift');
 });
 
-/* Notification */
-testNotifBtn.addEventListener('click', ()=>{
+/* Top-right test notification */
+notifBtnTop.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
     const notif = new Notification("FridgeMind", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
@@ -189,3 +190,4 @@ function addItem(){
 </script>
 </body>
 </html>
+
