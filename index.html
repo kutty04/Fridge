@@ -5,68 +5,77 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>FridgeMind — Dashboard</title>
 <style>
-:root{
-  --pink:#ffb6c1; --pink-d:#ff9eb3; --warn-bg:#ffd1dc;
-  --card:#fff; --shadow:0 4px 14px rgba(0,0,0,0.08);
-  --bg:#e7f6ff; --blue:#cce7ff; --red:#ff6b6b;
-}
-body{
-  margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background: var(--bg); color:#333; padding:0; overflow-x:hidden;
-}
-h1{ text-align:center; margin:12px 0; color:#ff6f9a; }
-.wrap{ max-width:720px; margin:0 auto; padding:24px; transition: margin-left .3s ease; }
-.card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); }
-.row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-input[type="text"], input[type="date"]{
-  padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
-}
-button{
-  background:var(--pink); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
-}
-button.secondary{ background:#fff; color:#333; border:1px solid #f3dbe2; }
-button.delete-btn{ background:var(--red); color:white; border-radius:12px; padding:8px 12px; border:none; cursor:pointer; }
-button:disabled{ opacity:.6; transform:none; cursor:default; }
-.items{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
-.item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
-.info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
-.name{ font-weight:700; font-size:15px; }
-.expiry{ color:#666; font-size:14px; }
-.badge{ background:var(--warn-bg); color:#9b1b2b; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
-.suggest{ font-size:13px; color:#666; font-style:italic; }
-.toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
-.sidebar{
-  position:fixed; top:0; left:-240px; width:240px; height:100%; background:#fff; box-shadow:2px 0 12px rgba(0,0,0,.1); transition:left .3s ease; z-index:1000; padding-top:24px;
-}
-.sidebar.active{ left:0; }
-.sidebar h2{ text-align:center; margin-bottom:24px; color:#ff6f9a; }
-.sidebar button{ display:block; width:90%; margin:6px auto; text-align:left; padding:10px 14px; border-radius:12px; font-size:15px; background:var(--blue); color:#333; border:none; cursor:pointer; }
-#hamburger{ position:fixed; top:12px; left:12px; font-size:24px; cursor:pointer; z-index:1100; background:var(--pink); color:#fff; border:none; border-radius:50%; width:40px; height:40px; }
+  :root{
+    --bg: #e7f6ff; 
+    --card:#fff; 
+    --shadow:0 4px 14px rgba(0,0,0,0.08);
+    --pink:#ffb6c1;
+    --pink-dark:#ff9eb3;
+    --red:#f76c6c;
+    --warn-bg:#ffd1dc;
+  }
+  body{
+    margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    background: linear-gradient(135deg,#d4f0ff 0%,#f9e7f5 100%);
+    color:#333; padding:0; overflow-x:hidden;
+  }
+  h1{ text-align:center; margin:12px 0; color:#ff6f9a; }
+  .wrap{ max-width:960px; margin:0 auto; padding:24px; }
+  .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  input[type="text"], input[type="date"]{
+    padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
+  }
+  button{
+    background:var(--pink); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+    transition:0.2s;
+  }
+  button:hover{opacity:0.9;}
+  button.secondary{ background:#fff; color:#333; border:1px solid #f3dbe2; }
+  button.red{ background:var(--red); }
+  button:disabled{ opacity:.6; transform:none; cursor:default; }
+  .items{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+  .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
+  .name{ font-weight:700; font-size:15px; }
+  .expiry{ color:#666; font-size:14px; }
+  .badge{ background:var(--warn-bg); color:#9b1b2b; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+  .suggest{ font-size:13px; color:#666; font-style:italic; }
+  .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
+  /* Sidebar */
+  .sidebar{ position:fixed; top:0; left:-240px; width:240px; height:100%; background:#fff; box-shadow:2px 0 12px rgba(0,0,0,0.1); transition:0.3s; padding:24px; z-index:10; display:flex; flex-direction:column; gap:12px;}
+  .sidebar.show{left:0;}
+  .sidebar button{width:100%; text-align:left;}
+  .overlay{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.2); display:none; z-index:9;}
+  .overlay.show{display:block;}
+  .topbar{display:flex; justify-content:space-between; align-items:center; padding:12px 24px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.05);}
 </style>
 </head>
 <body>
-<button id="hamburger">☰</button>
-<div class="sidebar" id="sidebar">
-  <h2>FridgeMind</h2>
-  <button data-page="home">🏠 Home</button>
-  <button data-page="categories">🥛 Categories</button>
-  <button data-page="nearExpiry">⚠️ Near Expiry</button>
-  <button data-page="recipes">🍳 Recipe Suggestions</button>
-  <button data-page="trash">🗑️ Trash</button>
+
+<div class="topbar">
+  <button id="menuBtn">☰ Menu</button>
+  <h1>🥕 FridgeMind</h1>
+  <button id="testNotifBtn">🔔 Test Notification</button>
 </div>
 
-<div class="wrap" id="mainContent">
-  <h1>🥕 FridgeMind — Track Items</h1>
+<div class="overlay" id="overlay"></div>
+<div class="sidebar" id="sidebar">
+  <button data-view="home">🏠 Home / Dashboard</button>
+  <button data-view="categories">🥛 Categories</button>
+  <button data-view="nearexpiry">⚠️ Near Expiry</button>
+  <button data-view="recipes">🍳 Recipe Suggestions</button>
+  <button data-view="trash">🗑️ Trash / Deleted Items</button>
+</div>
 
-  <div class="card">
+<div class="wrap" id="mainWrap">
+  <!-- Add Item Card -->
+  <div class="card" id="addCard">
     <div style="display:flex;gap:10px;flex-direction:column;">
       <div class="row">
         <input id="itemName" type="text" placeholder="Enter item name 🍅" />
         <input id="expiryDate" type="date" />
         <button id="addBtn">➕ Add</button>
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <button id="testNotif">🔔 Test Notification</button>
       </div>
     </div>
   </div>
@@ -75,18 +84,33 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 </div>
 
 <script>
-/* Pantry data */
+/* Pantry data with type and default expiry */
 const pantry = {
-  "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:5 },
-  "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:7 },
-  "potato":   { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14 },
-  "carrot":   { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiry:10 },
-  "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiry:3 },
-  "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"], expiry:3 },
-  "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiry:30 },
-  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:10 }
+  "tomato": { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam"], expiry:5, type:"Vegetables" },
+  "onion": { emoji:"🧅", recipes:["Onion Pakora"], expiry:5, type:"Vegetables" },
+  "potato": { emoji:"🥔", recipes:["Aloo Curry"], expiry:7, type:"Vegetables" },
+  "carrot": { emoji:"🥕", recipes:["Carrot Halwa"], expiry:5, type:"Vegetables" },
+  "bread": { emoji:"🍞", recipes:["Bread Upma"], expiry:3, type:"Bakery" },
+  "milk": { emoji:"🥛", recipes:["Paneer"], expiry:3, type:"Dairy" },
+  "rice": { emoji:"🍚", recipes:["Lemon Rice"], expiry:180, type:"Grains" },
+  "egg": { emoji:"🥚", recipes:["Egg Bhurji"], expiry:10, type:"Eggs & Meat" },
+  "apple": { emoji:"🍎", recipes:["Apple Pie"], expiry:7, type:"Fruits" }
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
+
+/* Sidebar toggle */
+const menuBtn = document.getElementById('menuBtn');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+menuBtn.addEventListener('click', ()=>{sidebar.classList.add('show'); overlay.classList.add('show');});
+overlay.addEventListener('click', ()=>{sidebar.classList.remove('show'); overlay.classList.remove('show');});
+
+/* UI refs */
+const itemNameInput = document.getElementById('itemName');
+const expiryInput = document.getElementById('expiryDate');
+const addBtn = document.getElementById('addBtn');
+const itemList = document.getElementById('itemList');
+const testNotifBtn = document.getElementById('testNotifBtn');
 
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
@@ -94,143 +118,92 @@ function findPantryKeyFromLabel(label){
   const L = normalize(label);
   if(aliases[L]) return aliases[L];
   if(pantry[L]) return L;
-  for(const key of Object.keys(pantry)){
-    if(L.includes(key)) return key;
-  }
+  for(const key of Object.keys(pantry)){if(L.includes(key)) return key;}
   return null;
 }
 
-/* UI refs */
-const itemNameInput = document.getElementById('itemName');
-const expiryInput = document.getElementById('expiryDate');
-const addBtn = document.getElementById('addBtn');
-const itemList = document.getElementById('itemList');
-const testNotif = document.getElementById('testNotif');
-
 function showToast(msg){
   const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
+  t.className = 'toast'; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(()=> t.remove(), 2500);
 }
 
-/* Hamburger toggle */
-const hamburger = document.getElementById('hamburger');
-const sidebar = document.getElementById('sidebar');
-const mainContent = document.getElementById('mainContent');
-hamburger.addEventListener('click',()=> sidebar.classList.toggle('active'));
-
-/* Notification */
-testNotif.addEventListener('click',()=>{
-  if(!("Notification" in window)){ alert("Notifications not supported!"); return; }
-  Notification.requestPermission().then(p=>{
-    if(p==="granted"){
-      const notif = new Notification("FridgeMind Alert!",{body:"This is a test notification 🔔"});
-      const audio = new Audio("https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg");
-      audio.play();
-    }
-  });
-});
-
 /* Add item */
 addBtn.addEventListener('click', addItem);
 function addItem(){
-  const raw = (itemNameInput.value || "").trim();
-  if(!raw){ showToast("Enter name"); return; }
-  let expiry = expiryInput.value;
-  const keyTry = findPantryKeyFromLabel(raw.toLowerCase());
-  if(!expiry && keyTry) {
-    const d = new Date();
-    d.setDate(d.getDate() + pantry[keyTry].expiry);
-    expiry = d.toISOString().split('T')[0];
-  }
-  if(!expiry){ showToast("Enter expiry date"); return; }
+  let raw = (itemNameInput.value || "").trim();
+  if(!raw) {showToast("Enter item name"); return;}
+  let keyTry = findPantryKeyFromLabel(raw.toLowerCase());
+  let expiryDays = pantry[keyTry]?.expiry || 3;
+  let expiry = expiryInput.value || new Date(Date.now()+expiryDays*24*60*60*1000).toISOString().split('T')[0];
 
   const dleft = daysUntil(expiry);
-  const card = document.createElement('div');
-  card.className = 'item-card';
+  const card = document.createElement('div'); card.className='item-card';
+  const info = document.createElement('div'); info.className='info';
 
-  const info = document.createElement('div');
-  info.className = 'info';
-  if(dleft <= 3){
-    const b = document.createElement('div');
-    b.className = 'badge';
-    b.textContent = `⚠️ Near Expiry (${dleft}d)`;
-    info.appendChild(b);
-  }
+  if(dleft <=3){ const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);}
+  const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=raw; info.appendChild(nameLine);
+  const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${expiry}`; info.appendChild(expiryLine);
 
-  const nameLine = document.createElement('div');
-  nameLine.className = 'name';
-  nameLine.textContent = raw;
-  info.appendChild(nameLine);
-
-  const expiryLine = document.createElement('div');
-  expiryLine.className = 'expiry';
-  expiryLine.textContent = `Expiry: ${expiry}`;
-  info.appendChild(expiryLine);
-
-  if(dleft <=3 && keyTry){
-    const pool = pantry[keyTry].recipes;
-    const pick = pool[Math.floor(Math.random()*pool.length)];
-    const link = `https://www.youtube.com/results?search_query=${encodeURIComponent(pick + ' recipe')}`;
-    const s = document.createElement('div');
-    s.className = 'suggest';
-    s.innerHTML = `🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
+  if(dleft<=3 && keyTry){
+    const pool = pantry[keyTry].recipes; const pick = pool[Math.floor(Math.random()*pool.length)];
+    const link=`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`;
+    const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
     info.appendChild(s);
   }
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className='delete-btn';
-  deleteBtn.textContent='🗑️ Delete';
-  deleteBtn.addEventListener('click',()=>{ 
-    itemList.removeChild(card);
-    trash.push({name:raw,expiry});
-  });
+  const delBtn=document.createElement('button'); delBtn.className='red'; delBtn.textContent='🗑️ Delete';
+  delBtn.addEventListener('click', ()=>{card.remove(); showToast(`${raw} deleted`);});
 
-  card.appendChild(info);
-  card.appendChild(deleteBtn);
-  itemList.prepend(card);
+  card.appendChild(info); card.appendChild(delBtn); itemList.prepend(card);
 
   itemNameInput.value=''; expiryInput.value='';
 }
 
-function daysUntil(dateStr){
-  const t = new Date();
-  const e = new Date(dateStr);
-  return Math.ceil((e - t) / (1000*60*60*24));
-}
+/* Days left */
+function daysUntil(dateStr){ const t=new Date(); const e=new Date(dateStr); return Math.ceil((e-t)/(1000*60*60*24)); }
 
-/* Trash history */
-const trash = [];
+/* Test notification */
+testNotifBtn.addEventListener('click', ()=>{
+  if(Notification.permission==="granted"){
+    new Notification("FridgeMind", { body:"This is a test notification! 🔔", icon:"" });
+    const audio = new Audio("https://www.soundjay.com/buttons/sounds/button-16.mp3"); audio.play();
+  } else {
+    Notification.requestPermission().then(p=>{if(p==="granted"){showToast("Permission granted! Click test again.");} else {showToast("Notification denied.");}});
+  }
+});
 
-/* Sidebar navigation - simple filter logic */
-const sidebarBtns = sidebar.querySelectorAll('button[data-page]');
-sidebarBtns.forEach(b=>{
-  b.addEventListener('click',()=>{
-    const page = b.getAttribute('data-page');
-    if(page==='home'){
-      Array.from(itemList.children).forEach(c=>c.style.display='flex');
-    } else if(page==='nearExpiry'){
-      Array.from(itemList.children).forEach(c=>{
-        c.style.display = c.querySelector('.badge') ? 'flex':'none';
-      });
-    } else if(page==='categories'){
-      Array.from(itemList.children).forEach(c=>c.style.display='flex');
-    } else if(page==='recipes'){
-      Array.from(itemList.children).forEach(c=>c.style.display='flex');
-    } else if(page==='trash'){
-      itemList.innerHTML='';
-      trash.forEach(ti=>{
-        const tdiv = document.createElement('div');
-        tdiv.className='item-card';
-        tdiv.innerHTML=`<div class="info"><div class="name">${ti.name}</div><div class="expiry">Expiry: ${ti.expiry}</div></div>`;
-        itemList.appendChild(tdiv);
-      });
+/* Sidebar menu actions */
+sidebar.querySelectorAll('button[data-view]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    sidebar.classList.remove('show'); overlay.classList.remove('show');
+    const view = b.getAttribute('data-view');
+    switch(view){
+      case 'home': showAllItems(); break;
+      case 'categories': showCategories(); break;
+      case 'nearexpiry': showNearExpiry(); break;
+      case 'recipes': showRecipes(); break;
+      case 'trash': showToast("Trash feature coming soon!"); break;
     }
-    sidebar.classList.remove('active');
   });
 });
+
+function showAllItems(){ Array.from(itemList.children).forEach(c=>c.style.display='flex'); }
+function showNearExpiry(){ Array.from(itemList.children).forEach(c=>{
+  const badge = c.querySelector('.badge');
+  c.style.display = badge? 'flex':'none';
+});}
+function showRecipes(){ Array.from(itemList.children).forEach(c=>c.style.display='flex'); showToast("Click suggestions links!"); }
+function showCategories(){
+  const types=[...new Set(Object.values(pantry).map(p=>p.type))];
+  const catChoice = prompt("Enter category:\n"+types.join(", "));
+  if(!catChoice) return;
+  Array.from(itemList.children).forEach(c=>{
+    const key = findPantryKeyFromLabel(c.querySelector('.name').textContent);
+    c.style.display = (pantry[key].type.toLowerCase() === catChoice.toLowerCase())? 'flex':'none';
+  });
+}
 </script>
 </body>
 </html>
