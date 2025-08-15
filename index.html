@@ -6,11 +6,12 @@
 <title>FridgeMind — Track Items</title>
 <style>
   :root{
-    --bg: #dcefff;        /* soft pastel blue background */
-    --pink: #ffb6c1;      /* Add button */
-    --delete: #ff4d4d;    /* Delete button */
-    --warn-bg: #ffd1dc;   /* Near expiry badge */
-    --card:#fff; --shadow:0 4px 14px rgba(0,0,0,0.08);
+    --bg:#dceefc; 
+    --pink:#ffb6c1; 
+    --red:#ff4d4d; 
+    --warn-bg:#ffd1dc;
+    --card:#fff; 
+    --shadow:0 4px 14px rgba(0,0,0,0.08);
   }
   body{
     margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
@@ -25,11 +26,11 @@
     padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
   }
   button{
-    border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+    background:var(--pink); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
   }
-  .add-btn{ background:var(--pink); color:white; }
-  .delete-btn{ background:var(--delete); color:white; }
-  button:disabled{ opacity:.6; cursor:default; }
+  button.delete-btn{ background:var(--red); }
+  button.secondary{ background:#fff; color:#333; border:1px solid #f3dbe2; }
+  button:disabled{ opacity:.6; transform:none; cursor:default; }
   .items{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
   .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
   .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
@@ -42,33 +43,34 @@
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>🥕 FridgeMind — Track Items</h1>
+<div class="wrap">
+  <h1>🥕 FridgeMind — Track Items</h1>
 
-    <div class="card">
-      <div style="display:flex;gap:10px;flex-direction:column;">
-        <div class="row">
-          <input id="itemName" type="text" placeholder="Enter item name 🍅" />
-          <input id="expiryDate" type="date" />
-          <button id="addBtn" class="add-btn">➕ Add</button>
-        </div>
+  <div class="card">
+    <div style="display:flex;gap:10px;flex-direction:column;">
+      <div class="row">
+        <input id="itemName" type="text" placeholder="Enter item name 🍅" />
+        <input id="expiryDate" type="date" />
+        <button id="addBtn">➕ Add</button>
       </div>
+      <div class="note small">You can manually set expiry, or automatic detection will fill it.</div>
     </div>
-
-    <div class="items" id="itemList"></div>
   </div>
 
+  <div class="items" id="itemList"></div>
+</div>
+
 <script>
-/* Pantry data with automatic expiry in days */
+// Pantry data with automatic expiry days
 const pantry = {
-  "tomato":   { emoji:"🍅", expiryDays:5, recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"] },
-  "onion":    { emoji:"🧅", expiryDays:7, recipes:["Onion Chutney","Onion Pakora","Onion Sambar"] },
-  "potato":   { emoji:"🥔", expiryDays:14, recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"] },
-  "carrot":   { emoji:"🥕", expiryDays:10, recipes:["Carrot Halwa","Carrot Poriyal"] },
-  "bread":    { emoji:"🍞", expiryDays:3, recipes:["Bread Upma","Bread Pakora"] },
-  "milk":     { emoji:"🥛", expiryDays:3, recipes:["Make Paneer","Kheer"] },
-  "rice":     { emoji:"🍚", expiryDays:180, recipes:["Lemon Rice","Curd Rice"] },
-  "egg":      { emoji:"🥚", expiryDays:14, recipes:["Egg Curry","Egg Bhurji"] }
+  "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiryDays:5 },
+  "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiryDays:7 },
+  "potato":   { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiryDays:10 },
+  "carrot":   { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiryDays:7 },
+  "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiryDays:3 },
+  "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"], expiryDays:3 },
+  "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiryDays:180 },
+  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiryDays:10 }
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
@@ -84,90 +86,91 @@ function findPantryKeyFromLabel(label){
   return null;
 }
 
-/* UI refs */
+// UI refs
 const itemNameInput = document.getElementById('itemName');
 const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
 
-function showToast(msg){
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(()=> t.remove(), 2500);
+// Ding sound & notifications
+const dingSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
+if("Notification" in window && Notification.permission!=="granted"){
+  Notification.requestPermission();
 }
 
-/* Auto-set expiry when item typed */
-itemNameInput.addEventListener('blur', ()=>{
-  const key = findPantryKeyFromLabel(itemNameInput.value);
-  if(key && pantry[key].expiryDays){
-    const d = new Date();
-    d.setDate(d.getDate() + pantry[key].expiryDays);
-    expiryInput.valueAsDate = d;
+function sendNotification(itemName, daysLeft){
+  if("Notification" in window && Notification.permission==="granted"){
+    new Notification(`⚠️ ${itemName} is near expiry`, {
+      body:`Expires in ${daysLeft} day(s)!`,
+      icon:"https://i.imgur.com/8yQXhCq.png"
+    });
+    dingSound.play().catch(e=>console.log("Sound blocked:",e));
   }
-});
+}
 
-/* Add item */
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// Add item
 addBtn.addEventListener('click', addItem);
 function addItem(){
-  const raw = (itemNameInput.value || "").trim();
-  const expiry = expiryInput.value;
-  if(!raw || !expiry){ showToast("Enter name & expiry"); return; }
+  let raw = (itemNameInput.value || "").trim();
+  if(!raw){ showToast("Enter item name"); return; }
 
   const keyTry = findPantryKeyFromLabel(raw.toLowerCase()) || null;
-  const dleft = daysUntil(expiry);
-  const card = document.createElement('div');
-  card.className = 'item-card';
 
-  const info = document.createElement('div');
-  info.className = 'info';
-  if(dleft <= 3){
-    const b = document.createElement('div');
-    b.className = 'badge';
-    b.textContent = `⚠️ Near Expiry (${dleft}d)`;
-    info.appendChild(b);
+  // Auto detect expiry if field empty
+  let expiry = expiryInput.value;
+  if(!expiry && keyTry){
+    const d = new Date();
+    d.setDate(d.getDate() + pantry[keyTry].expiryDays);
+    expiry = d.toISOString().split('T')[0];
   }
-  const nameLine = document.createElement('div');
-  nameLine.className = 'name';
-  nameLine.textContent = raw;
+  if(!expiry){ showToast("Set expiry date"); return; }
+
+  const dleft = daysUntil(expiry);
+  const card = document.createElement('div'); card.className='item-card';
+  const info = document.createElement('div'); info.className='info';
+
+  if(dleft<=3){
+    const b=document.createElement('div'); b.className='badge';
+    b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);
+    sendNotification(raw,dleft);
+  }
+
+  const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=raw;
   info.appendChild(nameLine);
 
-  const expiryLine = document.createElement('div');
-  expiryLine.className = 'expiry';
-  expiryLine.textContent = `Expiry: ${expiry}`;
+  const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${expiry}`;
   info.appendChild(expiryLine);
 
-  if(dleft <= 3 && keyTry){
-    const pool = pantry[keyTry].recipes;
-    const pick = pool[Math.floor(Math.random()*pool.length)];
-    const link = `https://www.youtube.com/results?search_query=${encodeURIComponent(pick + ' recipe')}`;
-    const s = document.createElement('div');
-    s.className = 'suggest';
-    s.innerHTML = `🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
+  if(dleft<=3 && keyTry){
+    const pool=pantry[keyTry].recipes; const pick=pool[Math.floor(Math.random()*pool.length)];
+    const link=`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`;
+    const s=document.createElement('div'); s.className='suggest';
+    s.innerHTML=`🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
     info.appendChild(s);
   }
 
-  const delBtn = document.createElement('button');
-  delBtn.className = 'delete-btn';
-  delBtn.textContent = '🗑️ Delete';
-  delBtn.addEventListener('click', ()=> card.remove());
+  const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑 Delete';
+  delBtn.addEventListener('click',()=>card.remove());
 
-  card.appendChild(info);
-  card.appendChild(delBtn);
-  itemList.prepend(card);
+  card.appendChild(info); card.appendChild(delBtn); itemList.prepend(card);
 
-  itemNameInput.value = '';
-  expiryInput.value = '';
+  itemNameInput.value=''; expiryInput.value='';
 }
 
 function daysUntil(dateStr){
-  const t = new Date();
-  const e = new Date(dateStr);
-  return Math.ceil((e - t) / (1000*60*60*24));
+  const t=new Date(); const e=new Date(dateStr);
+  return Math.ceil((e-t)/(1000*60*60*24));
 }
 </script>
 </body>
 </html>
+
 
 
