@@ -29,7 +29,7 @@ h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
 .sidebar.show{ left:20px; }
 .sidebar button{ padding:10px; border:none; border-radius:12px; cursor:pointer; font-weight:600; background:var(--pink); color:#fff; text-align:left; }
 .sidebar button.delete{ background:var(--red); }
-.main{ flex:1; margin-left:240px; transition:0.3s; display:flex; flex-direction:column; align-items:center; }
+.main{ flex:1; margin-left:20px; transition:0.3s; display:flex; flex-direction:column; align-items:center; padding-bottom:40px; }
 .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; width:100%; max-width:500px; }
 .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
 input[type="text"], input[type="date"]{
@@ -54,59 +54,6 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; width:100%; max-width:500px; display:none; flex-direction:column; }
 .analytics-header{ display:flex; justify-content:space-between; cursor:pointer; align-items:center; }
 .analytics-content{ display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
-  <!-- Add this inside your analytics-panel, below analyticsContent -->
-<canvas id="analyticsChart" style="max-width:500px; margin-top:16px;"></canvas>
-
-<!-- Add Chart.js before closing body -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-function renderAnalyticsChart(){
-  const ctx = document.getElementById('analyticsChart').getContext('2d');
-  const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
-  const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
-
-  const categories = { "Vegetables":0, "Fruits":0, "Dairy":0, "Grains":0, "Other":0 };
-  allItems.forEach(i=>{
-    if(!trash.includes(i)){
-      const key = i.key;
-      const cat = key && pantry[key]? pantry[key].category : "Other";
-      categories[cat]++; 
-    }
-  });
-
-  if(window.fridgeChart) fridgeChart.destroy(); // remove old chart
-  window.fridgeChart = new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels:['Today Expiring','This Week','Vegetables','Fruits','Dairy','Grains','Other'],
-      datasets:[{
-        label:'Items Count',
-        data:[todayCount, weekCount, categories.Vegetables, categories.Fruits, categories.Dairy, categories.Grains, categories.Other],
-        backgroundColor:[
-          '#FFB6C1','#FFD1DC','#A8E6CF','#FFECB3','#D8BFD8','#B0E0E6','#FFC0CB'
-        ],
-        borderRadius:8
-      }]
-    },
-    options:{
-      plugins:{ legend:{ display:false } },
-      scales:{
-        y:{ beginAtZero:true, ticks:{stepSize:1} }
-      }
-    }
-  });
-}
-
-// Update chart whenever analytics updates
-function updateAnalytics(){
-  // existing analytics code...
-  const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
-  const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
-  // ...rest of existing code
-  renderAnalyticsChart(); // <-- call chart rendering
-}
-</script>
-
 .analytics-card{ background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 2px 6px rgba(0,0,0,.08); flex:1 1 120px; text-align:center; }
 .analytics-card h4{ margin:0 0 6px; font-size:14px; color:#666; }
 .analytics-card p{ margin:0; font-weight:700; font-size:16px; color:#333; }
@@ -152,15 +99,15 @@ function updateAnalytics(){
       <h3>📊 Fridge Analytics</h3>
       <span id="toggleAnalytics" style="font-size:18px; cursor:pointer;">▼</span>
     </div>
-    <div class="analytics-content" id="analyticsContent">
-      <!-- Cards populated dynamically -->
-    </div>
+    <div class="analytics-content" id="analyticsContent"></div>
+    <canvas id="analyticsChart" style="max-width:500px; margin-top:16px;"></canvas>
     <div id="dailyReminders"></div>
   </div>
 
   <div class="items" id="itemList"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Pantry data
 const pantry = {
@@ -202,13 +149,17 @@ const analyticsBtn = document.getElementById('analyticsBtn');
 let allItems = [];
 let trash = [];
 
-// Toggle sidebar
-toggleMenu.addEventListener('click', ()=> sidebar.classList.toggle('show'));
+// Toggle sidebar & adjust main margin
+toggleMenu.addEventListener('click', ()=>{
+  sidebar.classList.toggle('show');
+  document.querySelector('.main').style.marginLeft = sidebar.classList.contains('show') ? '240px' : '20px';
+});
 
 // Toggle analytics panel
 analyticsBtn.addEventListener('click', ()=>{
   analyticsPanel.style.display = analyticsPanel.style.display==='flex'?'none':'flex';
   updateAnalytics();
+  renderAnalyticsChart();
 });
 
 // Notification
@@ -279,7 +230,6 @@ function renderItem(obj){
   const expiryLine = document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
   card.appendChild(info);
 
-  // Delete button
   const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
   delBtn.addEventListener('click', ()=>{ card.remove(); trash.push(obj); showToast(`${obj.name} moved to Trash`); updateAnalytics(); });
   card.appendChild(delBtn);
@@ -317,7 +267,6 @@ function updateAnalytics(){
     analyticsContent.appendChild(div);
   });
 
-  // Daily cute reminders
   allItems.filter(i=>!trash.includes(i) && daysUntil(i.expiry)<=3).forEach(i=>{
     const rem = document.createElement('div'); rem.className='reminder-card';
     rem.textContent=`🥕 ${i.name} is lonely! Use it today 😸`;
@@ -325,27 +274,38 @@ function updateAnalytics(){
   });
 }
 
-// Toggle categories submenu
+// Chart Rendering
+function renderAnalyticsChart(){
+  const ctx = document.getElementById('analyticsChart').getContext('2d');
+  const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
+  const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
+
+  const categories = { "Vegetables":0, "Fruits":0, "Dairy":0, "Grains":0, "Other":0 };
+  allItems.forEach(i=>{
+    if(!trash.includes(i)){
+      const key = i.key;
+      const cat = key && pantry[key]? pantry[key].category : "Other";
+      categories[cat]++; 
+    }
+  });
+
+  if(window.fridgeChart) fridgeChart.destroy();
+  window.fridgeChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['Today','Week',...Object.keys(categories)],
+      datasets:[{label:'Item Count',data:[todayCount,weekCount,...Object.values(categories)],backgroundColor:'#B19CD9'}]
+    },
+    options:{responsive:true, plugins:{legend:{display:false}}}
+  });
+}
+
+// Toggle category submenu
 categoriesBtn.addEventListener('click', ()=>{ categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex'; });
 
-// Menu buttons
-homeBtn.addEventListener('click', ()=>{ itemList.innerHTML=''; allItems.filter(i=>!trash.includes(i)).forEach(renderItem); showToast("🏠 Dashboard"); updateAnalytics(); });
-trashBtn.addEventListener('click', ()=>{
-  itemList.innerHTML=''; if(trash.length===0){ showToast("Trash is empty"); return; }
-  trash.forEach(t=>{
-    const card=document.createElement('div'); card.className='item-card';
-    const info=document.createElement('div'); info.className='info';
-    const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=t.name; info.appendChild(nameLine);
-    const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${t.expiry}`; info.appendChild(expiryLine);
-    const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
-    restoreBtn.addEventListener('click', ()=>{ allItems.push(t); renderItem(t); trash=trash.filter(x=>x!==t); card.remove(); updateAnalytics(); showToast(`${t.name} restored`); });
-    card.appendChild(info); card.appendChild(restoreBtn); itemList.appendChild(card);
-  });
-  showToast("🗑️ Trash Items");
-});
-expiryBtn.addEventListener('click', ()=>{ itemList.innerHTML=''; allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)).forEach(renderItem); showToast("⚠️ Near Expiry Items"); });
-recipesBtn.addEventListener('click', ()=>{ itemList.innerHTML=''; const nearExpiring = allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)); if(nearExpiring.length===0){ showToast("No near-expiry items"); return; } nearExpiring.forEach(renderItem); showToast("🍳 Recipe Magic"); });
-categorySubmenu.querySelectorAll('button').forEach(b=>{ b.addEventListener('click', ()=>{ const cat = b.dataset.cat; itemList.innerHTML=''; allItems.filter(i=>{ if(trash.includes(i)) return false; const key=i.key; const c = key && pantry[key]? pantry[key].category : "Other"; return c===cat; }).forEach(renderItem); showToast(`📂 ${cat}`); }); });
+// For quick demo, optionally preload some items
+["tomato","milk","bread","carrot"].forEach(name=>addItem({name}));
+
 </script>
 </body>
 </html>
