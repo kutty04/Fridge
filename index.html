@@ -33,8 +33,7 @@
   .expiry{ color:#666; font-size:14px; }
   .badge{ background:var(--warn-bg); color:#9b1b2b; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
   .suggest{ font-size:13px; color:#666; font-style:italic; }
-  .used-btn{ background:var(--pink); color:#fff; border-radius:999px; padding:8px 14px; border:none; cursor:pointer; }
-  .used-card{ background:#dff3e9 !important; }
+  .delete-btn{ background:#ff6f6f; color:#fff; border-radius:999px; padding:8px 14px; border:none; cursor:pointer; }
   .small{ font-size:12px; color:#777; }
   .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
 </style>
@@ -70,6 +69,18 @@ const pantry = {
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
+/* Default expiry days for items */
+const defaultExpiryDays = {
+  "milk": 3,
+  "bread": 5,
+  "egg": 10,
+  "tomato": 7,
+  "onion": 14,
+  "potato": 30,
+  "carrot": 10,
+  "rice": 180
+};
+
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
   if(!label) return null;
@@ -95,6 +106,16 @@ function showToast(msg){
   document.body.appendChild(t);
   setTimeout(()=> t.remove(), 2500);
 }
+
+/* Auto-fill expiry date on item input */
+itemNameInput.addEventListener('input', () => {
+  const key = findPantryKeyFromLabel(itemNameInput.value);
+  if(key && defaultExpiryDays[key]){
+    const today = new Date();
+    today.setDate(today.getDate() + defaultExpiryDays[key]);
+    expiryInput.value = today.toISOString().split('T')[0];
+  }
+});
 
 /* Add item */
 addBtn.addEventListener('click', addItem);
@@ -136,13 +157,11 @@ function addItem(){
     info.appendChild(s);
   }
 
-  // Delete button instead of Used
+  /* Delete button */
   const button = document.createElement('button');
-  button.className = 'used-btn';
+  button.className = 'delete-btn';
   button.textContent = '🗑️ Delete';
-  button.addEventListener('click', () => {
-    card.remove(); // remove the item card completely
-  });
+  button.addEventListener('click', ()=> card.remove());
 
   card.appendChild(info);
   card.appendChild(button);
@@ -160,4 +179,3 @@ function daysUntil(dateStr){
 </script>
 </body>
 </html>
-
