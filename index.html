@@ -5,50 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>FridgeMind — Dashboard</title>
 <style>
-  :root{
-    --bg-main:#E6E6FA; /* lavender */
-    --card:#F7F4FA;
-    --pink:#FFB6C1; 
-    --pink-gradient: linear-gradient(135deg, #FFB6C1, #FFC0CB);
-    --mint:#A8E6CF;
-    --red:#FF6B6B;
-    --shadow:0 4px 14px rgba(0,0,0,0.08);
-    --warn-bg:#FF6B6B;
-  }
-  body{
-    margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    background: var(--bg-main);
-    color:#333; padding:0;
-  }
-  h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
-  .wrap{ max-width:960px; margin:0 auto; padding:20px; display:flex; gap:20px; }
-  .sidebar{
-    width:220px; background:#D8BFD8; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px; height:90vh;
-    position:fixed; top:20px; left:-240px; transition:0.3s; z-index:10;
-  }
-  .sidebar.show{ left:20px; }
-  .sidebar button{ padding:10px; border:none; border-radius:12px; cursor:pointer; font-weight:600; background:var(--pink); color:#fff; text-align:left; }
-  .sidebar button.delete{ background:var(--red); }
-  .main{ flex:1; margin-left:240px; transition:0.3s; }
-  .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; }
-  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
-  input[type="text"], input[type="date"]{
-    padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
-  }
-  button.add-btn{ background:var(--pink); background-image: var(--pink-gradient); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
-  button.secondary{ background:var(--mint); color:#333; border:1px solid #f3dbe2; }
-  button.delete-btn{ background:var(--red); color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
-  button:disabled{ opacity:.6; transform:none; cursor:default; }
-  .items{ display:flex; flex-direction:column; gap:10px; }
-  .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
-  .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
-  .name{ font-weight:700; font-size:15px; }
-  .expiry{ color:#666; font-size:14px; }
-  .badge{ background:var(--warn-bg); color:#fff; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
-  .suggest{ font-size:13px; color:#666; font-style:italic; }
-  .small{ font-size:12px; color:#777; }
-  .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
-  .toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:11; }
+:root{
+  --bg-main:#E6E6FA; /* lavender */
+  --card:#F7F4FA;
+  --pink:#FFB6C1; 
+  --pink-gradient: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+  --mint:#A8E6CF;
+  --red:#FF6B6B;
+  --shadow:0 4px 14px rgba(0,0,0,0.08);
+  --warn-bg:#FF6B6B;
+}
+body{
+  margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background: var(--bg-main);
+  color:#333; padding:0; transition:0.3s;
+}
+h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
+.wrap{ max-width:960px; margin:0 auto; padding:20px; display:flex; gap:20px; }
+.sidebar{
+  width:220px; background:#D8BFD8; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px; height:90vh;
+  position:fixed; top:20px; left:-240px; transition:0.3s; z-index:10;
+}
+.sidebar.show{ left:20px; }
+.sidebar button{ padding:10px; border:none; border-radius:12px; cursor:pointer; font-weight:600; background:var(--pink); color:#fff; text-align:left; }
+.sidebar button.delete{ background:var(--red); }
+.main{ flex:1; margin-left:20px; transition:0.3s; }
+.main.shift{ margin-left:260px; } /* when sidebar open */
+.card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; }
+.row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
+input[type="text"], input[type="date"]{
+  padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
+}
+button.add-btn{ background:var(--pink); background-image: var(--pink-gradient); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
+button.secondary{ background:var(--mint); color:#333; border:1px solid #f3dbe2; }
+button.delete-btn{ background:var(--red); color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
+button:disabled{ opacity:.6; transform:none; cursor:default; }
+.items{ display:flex; flex-direction:column; gap:10px; }
+.item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+.info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
+.name{ font-weight:700; font-size:15px; }
+.expiry{ color:#666; font-size:14px; }
+.badge{ background:var(--warn-bg); color:#fff; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+.suggest{ font-size:13px; color:#666; font-style:italic; }
+.small{ font-size:12px; color:#777; }
+.toast{ position:fixed; top:20px; right:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; opacity:0.95; }
+.toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:11; }
 </style>
 </head>
 <body>
@@ -64,7 +65,7 @@
   <button id="testNotifBtn" class="secondary">🔔 Test Notification</button>
 </div>
 
-<div class="main">
+<div class="main" id="mainContent">
   <h1>🥕 FridgeMind — Track Items</h1>
 
   <div class="card">
@@ -95,20 +96,24 @@ const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 /* UI refs */
 const sidebar = document.getElementById('sidebar');
 const toggleMenu = document.querySelector('.toggle-menu');
+const mainContent = document.getElementById('mainContent');
 const itemNameInput = document.getElementById('itemName');
 const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
 const testNotifBtn = document.getElementById('testNotifBtn');
 
-/* Toggle sidebar */
-toggleMenu.addEventListener('click', ()=> sidebar.classList.toggle('show'));
+/* Toggle sidebar & push content */
+toggleMenu.addEventListener('click', ()=>{
+  sidebar.classList.toggle('show');
+  mainContent.classList.toggle('shift');
+});
 
 /* Notification */
 testNotifBtn.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
-    const notif = new Notification("FridgeMind Test", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
+    const notif = new Notification("FridgeMind", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
     const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
     audio.play();
   }
@@ -135,7 +140,7 @@ function showToast(msg){
   const t = document.createElement('div');
   t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
-  setTimeout(()=> t.remove(),2500);
+  setTimeout(()=> t.remove(),3000);
 }
 
 /* Add item */
@@ -151,7 +156,17 @@ function addItem(){
   const card = document.createElement('div'); card.className='item-card';
 
   const info = document.createElement('div'); info.className='info';
-  if(dleft<=3){ const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);}
+  if(dleft<=3){ 
+    const b=document.createElement('div'); b.className='badge'; 
+    b.textContent=`⚠️ Near Expiry (${dleft}d)`; 
+    info.appendChild(b);
+    // Show system notification
+    if(Notification.permission==='granted'){
+      const notif = new Notification("FridgeMind", { body:`${raw} is near expiry!`, icon:"https://i.imgur.com/8QfU5Yq.png" });
+      const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
+      audio.play();
+    }
+  }
   const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=raw; info.appendChild(nameLine);
   const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${expiry}`; info.appendChild(expiryLine);
 
