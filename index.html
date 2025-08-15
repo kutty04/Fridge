@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FridgeMind — Scan & Track</title>
+<title>FridgeMind — Track Items</title>
 <style>
   :root{
     --pink:#ffb6c1; --pink-d:#ff9eb3; --warn-bg:#ffd1dc;
@@ -21,8 +21,6 @@
   input[type="text"], input[type="date"]{
     padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
   }
-  .file-wrap{ display:flex; gap:8px; align-items:center; width:100%; }
-  .file-input{ flex:1; padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; }
   button{
     background:var(--pink); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
   }
@@ -37,31 +35,21 @@
   .suggest{ font-size:13px; color:#666; font-style:italic; }
   .used-btn{ background:var(--pink); color:#fff; border-radius:999px; padding:8px 14px; border:none; cursor:pointer; }
   .used-card{ background:#dff3e9 !important; }
-  .note{ margin-top:8px; font-size:13px; color:#666; }
   .small{ font-size:12px; color:#777; }
   .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>🥕 FridgeMind — Scan & Track</h1>
+    <h1>🥕 FridgeMind — Track Items</h1>
 
     <div class="card">
       <div style="display:flex;gap:10px;flex-direction:column;">
         <div class="row">
-          <input id="itemName" type="text" placeholder="Enter item name (or scan) 🍅" />
+          <input id="itemName" type="text" placeholder="Enter item name 🍅" />
           <input id="expiryDate" type="date" />
           <button id="addBtn">➕ Add</button>
         </div>
-
-        <div class="row" style="margin-top:8px;">
-          <div class="file-wrap" style="flex:1;">
-            <input id="fileInput" class="file-input" type="file" accept="image/*" />
-          </div>
-          <button id="scanBtn" title="Scan uploaded image">📷 Scan</button>
-        </div>
-
-        <div class="note small">Upload/take a photo ➜ click <strong>Scan</strong> to detect item. Then set expiry and Add.</div>
       </div>
     </div>
 
@@ -95,15 +83,10 @@ function findPantryKeyFromLabel(label){
 }
 
 /* UI refs */
-const fileInput = document.getElementById('fileInput');
-const scanBtn = document.getElementById('scanBtn');
 const itemNameInput = document.getElementById('itemName');
 const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
-let lastSelectedFile = null;
-
-fileInput.addEventListener('change', (e)=> lastSelectedFile = e.target.files[0] || null);
 
 function showToast(msg){
   const t = document.createElement('div');
@@ -112,56 +95,6 @@ function showToast(msg){
   document.body.appendChild(t);
   setTimeout(()=> t.remove(), 2500);
 }
-
-/* File to base64 */
-function fileToBase64NoPrefix(file){
-  return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onload = ()=> resolve(r.result.split(',')[1]);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
-}
-
-/* Scan handler */
-scanBtn.addEventListener('click', async ()=>{
-  if(!lastSelectedFile){ showToast("Choose/take a photo first"); return; }
-  scanBtn.disabled = true;
-  scanBtn.textContent = 'Scanning…';
-  try{
-    const b64 = await fileToBase64NoPrefix(lastSelectedFile);
-    const res = await fetch("/api/vision", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: b64 })
-    });
-    const data = await res.json();
-    if(data.error) throw new Error(data.error);
-
-    const labels = data.labelAnnotations || [];
-    const fullText = data.textAnnotations?.[0]?.description || "";
-    let match = null;
-    for(const l of labels){
-      const mapped = findPantryKeyFromLabel(l.description);
-      if(mapped){ match = mapped; break; }
-    }
-    if(match){
-      itemNameInput.value = `${pantry[match].emoji} ${match.charAt(0).toUpperCase()+match.slice(1)}`;
-      showToast(`Detected: ${match}`);
-    } else if(fullText){
-      itemNameInput.value = fullText.split('\n')[0];
-      showToast(`Detected text: ${itemNameInput.value}`);
-    } else {
-      showToast("Couldn't detect a usable label.");
-    }
-  } catch(err){
-    console.error(err);
-    showToast("Scan failed — check backend/API key.");
-  } finally {
-    scanBtn.disabled = false;
-    scanBtn.textContent = '📷 Scan';
-  }
-});
 
 /* Add item */
 addBtn.addEventListener('click', addItem);
@@ -218,8 +151,6 @@ function addItem(){
 
   itemNameInput.value = '';
   expiryInput.value = '';
-  fileInput.value = '';
-  lastSelectedFile = null;
 }
 
 function daysUntil(dateStr){
