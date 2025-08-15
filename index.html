@@ -29,8 +29,8 @@ h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
 .sidebar.show{ left:20px; }
 .sidebar button{ padding:10px; border:none; border-radius:12px; cursor:pointer; font-weight:600; background:var(--pink); color:#fff; text-align:left; }
 .sidebar button.delete{ background:var(--red); }
-.main{ flex:1; margin-left:240px; transition:0.3s; }
-.card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; }
+.main{ flex:1; margin-left:240px; transition:0.3s; display:flex; flex-direction:column; align-items:center; }
+.card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; width:100%; max-width:500px; }
 .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
 input[type="text"], input[type="date"]{
   padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
@@ -40,7 +40,7 @@ button.secondary{ background:var(--mint); color:#333; border:1px solid #f3dbe2; 
 button.delete-btn{ background:var(--red); color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
 button.restore-btn{ background:var(--mint); color:#333; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
 button:disabled{ opacity:.6; transform:none; cursor:default; }
-.items{ display:flex; flex-direction:column; gap:10px; }
+.items{ display:flex; flex-direction:column; gap:10px; width:100%; max-width:500px; }
 .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
 .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
 .name{ font-weight:700; font-size:15px; }
@@ -51,12 +51,14 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
 .toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:11; }
 .test-notif{ position:fixed; top:20px; right:20px; background:var(--mint); color:#333; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:12; }
-.analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; }
+.analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; width:100%; max-width:500px; display:none; flex-direction:column; }
 .analytics-header{ display:flex; justify-content:space-between; cursor:pointer; align-items:center; }
 .analytics-content{ display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
-.analytics-card{ background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 2px 6px rgba(0,0,0,.08); flex:1 1 120px; }
+.analytics-card{ background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 2px 6px rgba(0,0,0,.08); flex:1 1 120px; text-align:center; }
 .analytics-card h4{ margin:0 0 6px; font-size:14px; color:#666; }
 .analytics-card p{ margin:0; font-weight:700; font-size:16px; color:#333; }
+/* Reminder card */
+.reminder-card{ background:#FFFAF0; border-radius:12px; padding:10px 12px; margin-top:10px; text-align:center; font-weight:600; color:#333; box-shadow:0 2px 6px rgba(0,0,0,.05); font-size:14px; }
 </style>
 </head>
 <body>
@@ -76,6 +78,7 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
   </div>
   <button id="expiryBtn">⚠️ Near Expiry</button>
   <button id="recipesBtn">🍳 Recipe Suggestions</button>
+  <button id="analyticsBtn">📊 Analytics & Stats</button>
   <button id="trashBtn" class="delete">🗑️ Trash / Deleted Items</button>
 </div>
 
@@ -99,13 +102,14 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
     <div class="analytics-content" id="analyticsContent">
       <!-- Cards populated dynamically -->
     </div>
+    <div id="dailyReminders"></div>
   </div>
 
   <div class="items" id="itemList"></div>
 </div>
 
 <script>
-/* Pantry data */
+// Pantry data
 const pantry = {
   "tomato": { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables" },
   "onion": { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables" },
@@ -118,17 +122,11 @@ const pantry = {
   "egg": { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:10, category:"Other" },
   "paneer": { emoji:"🧀", recipes:["Paneer Butter Masala","Paneer Bhurji"], expiry:7, category:"Dairy" },
   "mango": { emoji:"🥭", recipes:["Mango Lassi","Mango Pickle"], expiry:5, category:"Fruits" },
-  "apple": { emoji:"🍎", recipes:["Apple Halwa","Apple Juice"], expiry:10, category:"Fruits" },
-  // Cooked dishes
-  "chicken curry": { emoji:"🍗", recipes:["Chicken Curry Rice","Chicken Sandwich"], expiry:2, category:"Other" },
-  "mutton curry": { emoji:"🥩", recipes:["Mutton Biryani","Mutton Wrap"], expiry:2, category:"Other" },
-  "pizza": { emoji:"🍕", recipes:["Pizza Sandwich","Pizza Toast"], expiry:2, category:"Other" },
-  "pav": { emoji:"🥖", recipes:["Pav Bhaji","Pav Sandwich"], expiry:2, category:"Other" },
-  "sandwich": { emoji:"🥪", recipes:["Grilled Sandwich","Open Sandwich"], expiry:2, category:"Other" }
+  "apple": { emoji:"🍎", recipes:["Apple Halwa","Apple Juice"], expiry:10, category:"Fruits" }
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
-/* UI refs */
+// UI refs
 const sidebar = document.getElementById('sidebar');
 const toggleMenu = document.querySelector('.toggle-menu');
 const itemNameInput = document.getElementById('itemName');
@@ -138,6 +136,7 @@ const itemList = document.getElementById('itemList');
 const testNotifBtn = document.getElementById('testNotifBtn');
 const analyticsPanel = document.getElementById('analyticsPanel');
 const analyticsContent = document.getElementById('analyticsContent');
+const dailyRemindersDiv = document.getElementById('dailyReminders');
 const toggleAnalytics = document.getElementById('toggleAnalytics');
 const homeBtn = document.getElementById('homeBtn');
 const trashBtn = document.getElementById('trashBtn');
@@ -145,26 +144,21 @@ const expiryBtn = document.getElementById('expiryBtn');
 const recipesBtn = document.getElementById('recipesBtn');
 const categoriesBtn = document.getElementById('categoriesBtn');
 const categorySubmenu = document.getElementById('categorySubmenu');
+const analyticsBtn = document.getElementById('analyticsBtn');
 
-/* Data storage */
 let allItems = [];
 let trash = [];
 
-/* Toggle sidebar */
+// Toggle sidebar
 toggleMenu.addEventListener('click', ()=> sidebar.classList.toggle('show'));
 
-/* Toggle analytics */
-toggleAnalytics.addEventListener('click', ()=>{
-  if(analyticsContent.style.display==='none'){ analyticsContent.style.display='flex'; toggleAnalytics.textContent='▼'; }
-  else { analyticsContent.style.display='none'; toggleAnalytics.textContent='▲'; }
+// Toggle analytics panel
+analyticsBtn.addEventListener('click', ()=>{
+  analyticsPanel.style.display = analyticsPanel.style.display==='flex'?'none':'flex';
+  updateAnalytics();
 });
 
-/* Toggle categories submenu */
-categoriesBtn.addEventListener('click', ()=>{
-  categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex';
-});
-
-/* Notification */
+// Notification
 testNotifBtn.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
@@ -174,7 +168,7 @@ testNotifBtn.addEventListener('click', ()=>{
   }
 });
 
-/* Helpers */
+// Helpers
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
   if(!label) return null;
@@ -198,7 +192,7 @@ function showToast(msg){
   setTimeout(()=> t.remove(),2500);
 }
 
-/* Add item */
+// Add item
 addBtn.addEventListener('click', ()=>addItem());
 function addItem(itemData){
   let raw = itemData?.name || itemNameInput.value.trim();
@@ -213,7 +207,7 @@ function addItem(itemData){
   if(!itemData){ itemNameInput.value=''; expiryInput.value=''; }
 }
 
-/* Render individual card */
+// Render individual card
 function renderItem(obj){
   const dleft = daysUntil(obj.expiry);
   const card = document.createElement('div'); card.className='item-card';
@@ -230,28 +224,19 @@ function renderItem(obj){
   }
   const nameLine = document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
   const expiryLine = document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
+  card.appendChild(info);
 
-  // Recipe suggestion
-  if(dleft<=3 && obj.key && pantry[obj.key].recipes.length>0){
-    const pool=pantry[obj.key].recipes;
-    const pick=pool[Math.floor(Math.random()*pool.length)];
-    const link=`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`;
-    const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
-    info.appendChild(s);
-  }
-
+  // Delete button
   const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
-  delBtn.addEventListener('click', ()=>{
-    card.remove(); trash.push(obj); showToast(`${obj.name} moved to Trash`);
-    updateAnalytics();
-  });
-  card.appendChild(info); card.appendChild(delBtn);
+  delBtn.addEventListener('click', ()=>{ card.remove(); trash.push(obj); showToast(`${obj.name} moved to Trash`); updateAnalytics(); });
+  card.appendChild(delBtn);
+
   itemList.prepend(card);
 }
 
-/* Update Analytics Panel */
+// Update Analytics
 function updateAnalytics(){
-  const todayCount = allItems.filter(i=>daysUntil(i.expiry)<=0 && !trash.includes(i)).length;
+  const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
   const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
   const expiredCount = allItems.filter(i=>daysUntil(i.expiry)<0 && !trash.includes(i)).length;
 
@@ -265,6 +250,8 @@ function updateAnalytics(){
   });
 
   analyticsContent.innerHTML='';
+  dailyRemindersDiv.innerHTML='';
+
   const cards = [
     {title:"Expiring Today", val:todayCount},
     {title:"Expiring This Week", val:weekCount},
@@ -276,91 +263,38 @@ function updateAnalytics(){
     div.innerHTML=`<h4>${c.title}</h4><p>${c.val}</p>`;
     analyticsContent.appendChild(div);
   });
+
+  // Daily cute reminders
+  allItems.filter(i=>!trash.includes(i) && daysUntil(i.expiry)<=3).forEach(i=>{
+    const rem = document.createElement('div'); rem.className='reminder-card';
+    rem.textContent=`🥕 ${i.name} is lonely! Use it today 😸`;
+    dailyRemindersDiv.appendChild(rem);
+  });
 }
 
-/* Menu button actions */
-// Home / Dashboard
-homeBtn.addEventListener('click', ()=>{
-  itemList.innerHTML='';
-  allItems.forEach(t=>{ if(!trash.includes(t)) renderItem(t); });
-  showToast("🏠 Dashboard");
-  updateAnalytics();
-});
+// Toggle categories submenu
+categoriesBtn.addEventListener('click', ()=>{ categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex'; });
 
-// Trash
+// Menu buttons
+homeBtn.addEventListener('click', ()=>{ itemList.innerHTML=''; allItems.filter(i=>!trash.includes(i)).forEach(renderItem); showToast("🏠 Dashboard"); updateAnalytics(); });
 trashBtn.addEventListener('click', ()=>{
-  itemList.innerHTML='';
-  if(trash.length===0){ showToast("Trash is empty"); return; }
+  itemList.innerHTML=''; if(trash.length===0){ showToast("Trash is empty"); return; }
   trash.forEach(t=>{
     const card=document.createElement('div'); card.className='item-card';
     const info=document.createElement('div'); info.className='info';
     const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=t.name; info.appendChild(nameLine);
     const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${t.expiry}`; info.appendChild(expiryLine);
     const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
-    restoreBtn.addEventListener('click', ()=>{
-      allItems.push(t); renderItem(t); trash=trash.filter(x=>x!==t); card.remove(); updateAnalytics();
-      showToast(`${t.name} restored`);
-    });
-    card.appendChild(info); card.appendChild(restoreBtn);
-    itemList.appendChild(card);
+    restoreBtn.addEventListener('click', ()=>{ allItems.push(t); renderItem(t); trash=trash.filter(x=>x!==t); card.remove(); updateAnalytics(); showToast(`${t.name} restored`); });
+    card.appendChild(info); card.appendChild(restoreBtn); itemList.appendChild(card);
   });
   showToast("🗑️ Trash Items");
 });
-
-// Near Expiry
-expiryBtn.addEventListener('click', ()=>{
-  itemList.innerHTML='';
-  allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)).forEach(renderItem);
-  showToast("⚠️ Near Expiry Items");
-});
-
-// Recipe suggestions
-recipesBtn.addEventListener('click', ()=>{
-  itemList.innerHTML='';
-  const nearExpiring = allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i));
-  if(nearExpiring.length===0){ showToast("No near-expiry items"); return; }
-
-  // individual suggestions
-  nearExpiring.forEach(renderItem);
-
-  // smart recipe combo
-  if(nearExpiring.length>=2){
-    const comboNames = nearExpiring.slice(0,3).map(i=>i.name).join(' + ');
-    const comboCard = document.createElement('div'); comboCard.className='item-card';
-    const info=document.createElement('div'); info.className='info';
-    const s=document.createElement('div'); s.className='suggest';
-    s.innerHTML=`✨ Combo Suggestion: <strong>${comboNames}</strong>`;
-    info.appendChild(s); comboCard.appendChild(info);
-    itemList.prepend(comboCard);
-  }
-
-  // leftover recipes
-  allItems.filter(i=>i.key && pantry[i.key].category==='Other' && !trash.includes(i)).forEach(i=>{
-    const card=document.createElement('div'); card.className='item-card';
-    const info=document.createElement('div'); info.className='info';
-    const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🥡 Leftover Recipe Idea: ${i.name} can be reused creatively!`;
-    info.appendChild(s); card.appendChild(info); itemList.appendChild(card);
-  });
-
-  showToast("🍳 Recipe Magic");
-});
-
-// Category buttons
-categorySubmenu.querySelectorAll('button').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    const cat = b.dataset.cat;
-    itemList.innerHTML='';
-    allItems.filter(i=>{
-      if(trash.includes(i)) return false;
-      const key=i.key;
-      const c = key && pantry[key]? pantry[key].category : "Other";
-      return c===cat;
-    }).forEach(renderItem);
-    showToast(`📂 ${cat}`);
-  });
-});
-
+expiryBtn.addEventListener('click', ()=>{ itemList.innerHTML=''; allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)).forEach(renderItem); showToast("⚠️ Near Expiry Items"); });
+recipesBtn.addEventListener('click', ()=>{ itemList.innerHTML=''; const nearExpiring = allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)); if(nearExpiring.length===0){ showToast("No near-expiry items"); return; } nearExpiring.forEach(renderItem); showToast("🍳 Recipe Magic"); });
+categorySubmenu.querySelectorAll('button').forEach(b=>{ b.addEventListener('click', ()=>{ const cat = b.dataset.cat; itemList.innerHTML=''; allItems.filter(i=>{ if(trash.includes(i)) return false; const key=i.key; const c = key && pantry[key]? pantry[key].category : "Other"; return c===cat; }).forEach(renderItem); showToast(`📂 ${cat}`); }); });
 </script>
 </body>
 </html>
+
 
