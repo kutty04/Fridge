@@ -39,8 +39,6 @@
   .used-card{ background:#dff3e9 !important; }
   .note{ margin-top:8px; font-size:13px; color:#666; }
   .small{ font-size:12px; color:#777; }
-  .loading-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#fff; margin-left:8px; box-shadow:12px 0 0 rgba(255,255,255,.3); vertical-align:middle; animation: blink 1s infinite; }
-  @keyframes blink{ 0%{opacity:1}50%{opacity:.4}100%{opacity:1} }
   .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
 </style>
 </head>
@@ -57,15 +55,13 @@
         </div>
 
         <div class="row" style="margin-top:8px;">
-          <!-- file input (styled) -->
           <div class="file-wrap" style="flex:1;">
             <input id="fileInput" class="file-input" type="file" accept="image/*" />
           </div>
-          <!-- scan button -->
           <button id="scanBtn" title="Scan uploaded image">📷 Scan</button>
         </div>
 
-        <div class="note small">Upload/take a photo ➜ click <strong>Scan</strong> to detect item (Google Vision). Then set expiry and Add. </div>
+        <div class="note small">Upload/take a photo ➜ click <strong>Scan</strong> to detect item. Then set expiry and Add.</div>
       </div>
     </div>
 
@@ -73,11 +69,7 @@
   </div>
 
 <script>
-/* ---- CONFIG ---- */
-const API_KEY = "AIzaSyAVdhr4MWMZzDdTSWspMy6SMs4pa7o6-tQ"; // <-- put your key here (frontend mode)
-const CONFIDENCE_THRESHOLD = 0.45; // label confidence threshold (lower broadens matches)
-
-/* ---- Pantry map + synonyms (used to map fuzzy labels to canonical items + emoji) ---- */
+/* Pantry data */
 const pantry = {
   "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"] },
   "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"] },
@@ -86,231 +78,114 @@ const pantry = {
   "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"] },
   "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"] },
   "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"] },
-  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"] },
-  "paneer":   { emoji:"🧀", recipes:["Paneer Butter Masala","Palak Paneer"] },
-  "garlic":   { emoji:"🧄", recipes:["Garlic Chutney","Garlic Pickle"] },
-  "ginger":   { emoji:"🌱", recipes:["Ginger Tea","Ginger Chutney"] },
-  "banana":   { emoji:"🍌", recipes:["Banana Halwa","Banana Smoothie"] },
-  "mango":    { emoji:"🥭", recipes:["Mango Lassi","Aamras"] },
-  "beans":    { emoji:"🫘", recipes:["Beans Poriyal","Beans Curry"] },
-  "brinjal":  { emoji:"🍆", recipes:["Baingan Bharta","Brinjal Curry"] },
-  "cauliflower": { emoji:"🌸", recipes:["Aloo Gobi","Gobi Masala"] },
-  "cabbage":  { emoji:"🥬", recipes:["Cabbage Poriyal","Cabbage Curry"] },
-  "chilli":   { emoji:"🌶️", recipes:["Mirchi Bajji","Chilli Pickle"] },
-  "coconut":  { emoji:"🥥", recipes:["Coconut Chutney","Thengai Sadam"] },
-  "dal":      { emoji:"🍲", recipes:["Dal Tadka","Sambar"] },
-  "tamarind": { emoji:"🟤", recipes:["Puliyodarai","Imli Chutney"] },
-  "wheat flour": { emoji:"🫓", recipes:["Chapati","Paratha"] }
+  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"] }
 };
+const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
-/* synonyms / aliases that Vision might return */
-const aliases = {
-  "tomatoes":"tomato","roma tomato":"tomato","cherry tomato":"tomato","vine tomato":"tomato",
-  "potatoes":"potato","spud":"potato","aloo":"potato",
-  "capsicum":"chilli","bell pepper":"chilli","green pepper":"chilli",
-  "aubergine":"brinjal","eggplant":"brinjal",
-  "cauli":"cauliflower","cauliflower head":"cauliflower",
-  "yogurt":"curd","yoghurt":"curd","curds":"curd","dahi":"curd",
-  "lentil":"dal","masoor":"dal","toor dal":"dal","moong":"dal",
-  "bottle gourd":"lauki"
-};
+function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
+function findPantryKeyFromLabel(label){
+  if(!label) return null;
+  const L = normalize(label);
+  if(aliases[L]) return aliases[L];
+  if(pantry[L]) return L;
+  for(const key of Object.keys(pantry)){
+    if(L.includes(key)) return key;
+  }
+  return null;
+}
 
-/* ----- UI helpers ----- */
+/* UI refs */
 const fileInput = document.getElementById('fileInput');
 const scanBtn = document.getElementById('scanBtn');
 const itemNameInput = document.getElementById('itemName');
 const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
-
 let lastSelectedFile = null;
 
-fileInput.addEventListener('change', (e)=>{
-  lastSelectedFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-});
+fileInput.addEventListener('change', (e)=> lastSelectedFile = e.target.files[0] || null);
 
-/* Toast */
-let toastTimeout = null;
 function showToast(msg){
-  if(toastTimeout) clearTimeout(toastTimeout);
   const t = document.createElement('div');
   t.className = 'toast';
   t.textContent = msg;
   document.body.appendChild(t);
-  toastTimeout = setTimeout(()=>{ t.remove(); toastTimeout = null; }, 2500);
+  setTimeout(()=> t.remove(), 2500);
 }
 
-/* ----- Matching logic ----- */
-function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
-
-/* tries to find a pantry key from a label (fuzzy): exact, alias, partial includes */
-function findPantryKeyFromLabel(label){
-  if(!label) return null;
-  const L = normalize(label);
-  if(aliases[L]) return aliases[L];
-  if(pantry[L]) return L;
-  // partial include checks: label contains key or key contains label
-  for(const key of Object.keys(pantry)){
-    if(L.includes(key)) return key;
-    if(key.includes(L)) return key;
-    // check first word matches (helps if label is "roma tomato", key "tomato")
-    const firstWord = L.split(/\s+/)[0];
-    if(key.includes(firstWord)) return key;
-  }
-  return null;
-}
-
-/* Uses returned labelAnnotations (with score) and text detection to pick best match */
-function pickBestMatch(labelAnnotations = [], fullText = ""){
-  // labelAnnotations: [{description, score}, ...]
-  const labels = (labelAnnotations || []).map(l => ({ desc: normalize(l.description), score: l.score || 0 }));
-  // sort by score desc
-  labels.sort((a,b)=>b.score - a.score);
-
-  // First pass: try to map label -> pantry key using findPantryKeyFromLabel (with confidence check)
-  for(const lab of labels){
-    // If label is specific enough and has a decent score, try map
-    const mapped = findPantryKeyFromLabel(lab.desc);
-    if(mapped && lab.score >= CONFIDENCE_THRESHOLD) return { key:mapped, source:lab.desc, score:lab.score };
-  }
-
-  // Second pass: try any mapping ignoring score (useful for low-confidence but correct)
-  for(const lab of labels){
-    const mapped = findPantryKeyFromLabel(lab.desc);
-    if(mapped) return { key:mapped, source:lab.desc, score:lab.score };
-  }
-
-  // Third: try to parse any useful word from OCR text (text detection)
-  if(fullText){
-    // take words and try to map
-    const tokens = fullText.split(/\s+/).map(t=>normalize(t)).filter(Boolean);
-    for(const t of tokens){
-      const mapped = findPantryKeyFromLabel(t);
-      if(mapped) return { key:mapped, source:t, score:0 };
-    }
-  }
-
-  // fallback: take top label's description (no emoji)
-  const top = labels[0];
-  if(top) return { key:null, source: top.desc, score: top.score };
-  return { key:null, source: null, score:0 };
-}
-
-/* ----- Vision API call (frontend) ----- */
-async function callVisionApi(base64Image){
-  if(!API_KEY || API_KEY === "AIzaSyAVdhr4MWMZzDdTSWspMy6SMs4pa7o6-tQ"){
-    throw new Error("Vision API key missing. Replace API_KEY in script.");
-  }
-  const body = {
-    requests: [{
-      image: { content: base64Image },
-      features: [
-        { type: "LABEL_DETECTION", maxResults: 10 },
-        { type: "TEXT_DETECTION", maxResults: 1 }
-      ]
-    }]
-  };
-
-  const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${API_KEY}`, {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify(body)
-  });
-  if(!res.ok){
-    const txt = await res.text();
-    throw new Error('Vision API error: ' + txt);
-  }
-  return await res.json();
-}
-
-/* Convert File -> base64 content (no header) */
+/* File to base64 */
 function fileToBase64NoPrefix(file){
   return new Promise((resolve,reject)=>{
     const r = new FileReader();
-    r.onload = ()=> {
-      const dataUrl = r.result.toString();
-      const base64 = dataUrl.split(',')[1];
-      resolve(base64);
-    };
+    r.onload = ()=> resolve(r.result.split(',')[1]);
     r.onerror = reject;
     r.readAsDataURL(file);
   });
 }
 
-/* ----- Scan button handler ----- */
+/* Scan handler */
 scanBtn.addEventListener('click', async ()=>{
   if(!lastSelectedFile){ showToast("Choose/take a photo first"); return; }
   scanBtn.disabled = true;
   scanBtn.textContent = 'Scanning…';
   try{
     const b64 = await fileToBase64NoPrefix(lastSelectedFile);
-    const json = await callVisionApi(b64);
-    const resp = json?.responses?.[0] || {};
-    const labelAnnotations = resp.labelAnnotations || [];
-    const fullText = resp.textAnnotations?.[0]?.description || "";
-    // pick best match
-    const match = pickBestMatch(labelAnnotations, fullText);
-    if(match.key){
-      // known pantry -> fill emoji + proper name
-      const pretty = match.key.charAt(0).toUpperCase() + match.key.slice(1);
-      itemNameInput.value = `${pantry[match.key].emoji} ${pretty}`;
-      showToast(`Detected: ${pretty}`);
-    } else if (match.source){
-      // fallback to top label (no emoji)
-      const pretty = match.source.split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-      itemNameInput.value = pretty;
-      showToast(`Detected: ${pretty}`);
-    } else if (fullText){
+    const res = await fetch("/api/vision", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: b64 })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+
+    const labels = data.labelAnnotations || [];
+    const fullText = data.textAnnotations?.[0]?.description || "";
+    let match = null;
+    for(const l of labels){
+      const mapped = findPantryKeyFromLabel(l.description);
+      if(mapped){ match = mapped; break; }
+    }
+    if(match){
+      itemNameInput.value = `${pantry[match].emoji} ${match.charAt(0).toUpperCase()+match.slice(1)}`;
+      showToast(`Detected: ${match}`);
+    } else if(fullText){
       itemNameInput.value = fullText.split('\n')[0];
-      showToast('Detected text from image');
+      showToast(`Detected text: ${itemNameInput.value}`);
     } else {
       showToast("Couldn't detect a usable label.");
     }
   } catch(err){
     console.error(err);
-    showToast("Scan failed — check API key & network (see console).");
+    showToast("Scan failed — check backend/API key.");
   } finally {
     scanBtn.disabled = false;
     scanBtn.textContent = '📷 Scan';
   }
 });
 
-/* ----- Add item UI + recipe suggestion ----- */
+/* Add item */
 addBtn.addEventListener('click', addItem);
 function addItem(){
   const raw = (itemNameInput.value || "").trim();
   const expiry = expiryInput.value;
   if(!raw || !expiry){ showToast("Enter name & expiry"); return; }
 
-  // determine pantry key (if present) from raw (strip emoji first if any)
-  let cleaned = raw;
-  // remove leading emoji if it matches a pantry emoji
-  for(const k of Object.keys(pantry)) {
-    const em = pantry[k].emoji;
-    if(cleaned.startsWith(em + ' ')) cleaned = cleaned.slice(em.length+1).trim();
-  }
-  // attempt to find key by raw text
-  const keyTry = findPantryKeyFromLabel(cleaned.toLowerCase()) || null;
-
+  const keyTry = findPantryKeyFromLabel(raw.toLowerCase()) || null;
   const dleft = daysUntil(expiry);
   const card = document.createElement('div');
   card.className = 'item-card';
 
   const info = document.createElement('div');
   info.className = 'info';
-
   if(dleft <= 3){
     const b = document.createElement('div');
     b.className = 'badge';
     b.textContent = `⚠️ Near Expiry (${dleft}d)`;
     info.appendChild(b);
   }
-
   const nameLine = document.createElement('div');
   nameLine.className = 'name';
-  const emoji = keyTry ? pantry[keyTry].emoji : (raw.match(/^\p{Emoji}/u) ? "" : "");
-  const displayName = (raw.startsWith(emoji) || emoji === "") ? raw : `${emoji} ${cleaned.charAt(0).toUpperCase()+cleaned.slice(1)}`;
-  nameLine.textContent = displayName;
+  nameLine.textContent = raw;
   info.appendChild(nameLine);
 
   const expiryLine = document.createElement('div');
@@ -318,24 +193,14 @@ function addItem(){
   expiryLine.textContent = `Expiry: ${expiry}`;
   info.appendChild(expiryLine);
 
-  if(dleft <= 3){
-    // recipe suggestion if pantry item known
-    if(keyTry){
-      const pool = pantry[keyTry].recipes;
-      const pick = pool[Math.floor(Math.random()*pool.length)];
-      const q = encodeURIComponent(`${pick} recipe`);
-      const link = `https://www.youtube.com/results?search_query=${q}`;
-      const s = document.createElement('div');
-      s.className = 'suggest';
-      s.innerHTML = `🍳 Suggestion: <a href="${link}" target="_blank" rel="noopener">${pick}</a>`;
-      info.appendChild(s);
-    } else {
-      // if unknown, optionally show top generic suggestion
-      const s = document.createElement('div');
-      s.className = 'suggest';
-      s.textContent = `🍳 Tip: Use it soon — search recipes for "${cleaned}"`;
-      info.appendChild(s);
-    }
+  if(dleft <= 3 && keyTry){
+    const pool = pantry[keyTry].recipes;
+    const pick = pool[Math.floor(Math.random()*pool.length)];
+    const link = `https://www.youtube.com/results?search_query=${encodeURIComponent(pick + ' recipe')}`;
+    const s = document.createElement('div');
+    s.className = 'suggest';
+    s.innerHTML = `🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
+    info.appendChild(s);
   }
 
   const button = document.createElement('button');
@@ -343,7 +208,7 @@ function addItem(){
   button.textContent = '✅ Used';
   button.addEventListener('click', ()=>{
     card.classList.add('used-card');
-    info.innerHTML = `${displayName} 🌟 Used!`;
+    info.innerHTML = `${raw} 🌟 Used!`;
     button.remove();
   });
 
@@ -351,26 +216,17 @@ function addItem(){
   card.appendChild(button);
   itemList.prepend(card);
 
-  // clear
   itemNameInput.value = '';
   expiryInput.value = '';
   fileInput.value = '';
   lastSelectedFile = null;
 }
 
-/* date helper */
-function stripTime(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 function daysUntil(dateStr){
-  const t = stripTime(new Date());
+  const t = new Date();
   const e = new Date(dateStr);
-  if(isNaN(e)) return Infinity;
   return Math.ceil((e - t) / (1000*60*60*24));
 }
-
-/* Enter key quick add */
-itemNameInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') addItem(); });
-expiryInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') addItem(); });
-
 </script>
 </body>
 </html>
