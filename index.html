@@ -39,6 +39,7 @@ input[type="text"], input[type="date"]{
 button.add-btn{ background:var(--pink); background-image: var(--pink-gradient); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
 button.secondary{ background:var(--mint); color:#333; border:1px solid #f3dbe2; }
 button.delete-btn{ background:var(--red); color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
+button.restore-btn{ background:var(--mint); color:#333; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
 button:disabled{ opacity:.6; transform:none; cursor:default; }
 .items{ display:flex; flex-direction:column; gap:10px; }
 .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
@@ -87,7 +88,6 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 </div>
 
 <script>
-/* Pantry data */
 const pantry = {
   "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables" },
   "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables" },
@@ -101,7 +101,6 @@ const pantry = {
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
-/* UI refs */
 const sidebar = document.getElementById('sidebar');
 const toggleMenu = document.querySelector('.toggle-menu');
 const mainContent = document.getElementById('mainContent');
@@ -112,26 +111,22 @@ const itemList = document.getElementById('itemList');
 const notifBtnTop = document.getElementById('notifBtnTop');
 const categorySubmenu = document.getElementById('categorySubmenu');
 
-/* Pantry items storage */
-let items = []; // {name, expiry, key}
+let items = [];
+let trashItems = [];
 
-/* Toggle sidebar */
 toggleMenu.addEventListener('click', ()=>{
   sidebar.classList.toggle('show');
   mainContent.classList.toggle('shift');
 });
 
-/* Notification button */
 notifBtnTop.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
-    const notif = new Notification("FridgeMind", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
-    const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
-    audio.play();
+    new Notification("FridgeMind", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
+    new Audio('https://www.soundjay.com/button/beep-07.wav').play();
   }
 });
 
-/* Helpers */
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
   if(!label) return null;
@@ -146,46 +141,71 @@ function findPantryKeyFromLabel(label){
 function daysUntil(dateStr){ const t=new Date(); const e=new Date(dateStr); return Math.ceil((e-t)/(1000*60*60*24)); }
 function showToast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
 
-/* Render items */
-function renderItems(filterFn=null){
+function renderItems(filterFn=null, listArr=items){
   itemList.innerHTML='';
-  const list = filterFn ? items.filter(filterFn) : items;
+  const list = filterFn ? listArr.filter(filterFn) : listArr;
   list.forEach(i=>{
     const dleft = daysUntil(i.expiry);
     const card = document.createElement('div'); card.className='item-card';
     const info = document.createElement('div'); info.className='info';
-    if(dleft<=3){ 
-      const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; 
-      // badge clickable to recipe
+    
+    if(listArr===items && dleft<=3){
+      const today = new Date().toDateString();
+      if(!i.lastNotified || i.lastNotified!==today){
+        if(Notification.permission==='granted'){
+          new Notification("FridgeMind", { body:`${i.name} is near expiry!`, icon:"https://i.imgur.com/8QfU5Yq.png" });
+          new Audio('https://www.soundjay.com/button/beep-07.wav').play();
+        }
+        i.lastNotified = today;
+      }
+      const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`;
       if(i.key && pantry[i.key] && pantry[i.key].recipes.length>0){
         b.style.cursor='pointer';
-        b.onclick=()=>{ const pick = pantry[i.key].recipes[Math.floor(Math.random()*pantry[i.key].recipes.length)];
+        b.onclick=()=>{ 
+          const pick = pantry[i.key].recipes[Math.floor(Math.random()*pantry[i.key].recipes.length)];
           window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`,'_blank');
         };
       }
       info.appendChild(b);
-      // notification
-      if(Notification.permission==='granted'){
-        const notif = new Notification("FridgeMind", { body:`${i.name} is near expiry!`, icon:"https://i.imgur.com/8QfU5Yq.png" });
-        const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
-        audio.play();
-      }
     }
+    
     const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=i.name; info.appendChild(nameLine);
     const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${i.expiry}`; info.appendChild(expiryLine);
-    if(dleft<=3 && i.key){
+    
+    if(listArr===items && dleft<=3 && i.key){
       const pool=pantry[i.key].recipes;
       const pick=pool[Math.floor(Math.random()*pool.length)];
       const link=`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`;
       const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
       info.appendChild(s);
     }
-    const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
-    delBtn.addEventListener('click', ()=>{
-      items = items.filter(it=>it!==i);
-      renderItems();
-    });
-    card.appendChild(info); card.appendChild(delBtn);
+    
+    card.appendChild(info);
+
+    if(listArr===items){
+      const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
+      delBtn.addEventListener('click', ()=>{
+        items = items.filter(it=>it!==i);
+        trashItems.push(i);
+        renderItems();
+      });
+      card.appendChild(delBtn);
+    } else {
+      const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
+      restoreBtn.addEventListener('click', ()=>{
+        trashItems = trashItems.filter(it=>it!==i);
+        items.push(i);
+        renderItems();
+      });
+      const permDelBtn=document.createElement('button'); permDelBtn.className='delete-btn'; permDelBtn.textContent='❌ Delete Permanently';
+      permDelBtn.addEventListener('click', ()=>{
+        trashItems = trashItems.filter(it=>it!==i);
+        renderItems(null, trashItems);
+      });
+      card.appendChild(restoreBtn);
+      card.appendChild(permDelBtn);
+    }
+
     itemList.appendChild(card);
   });
 }
@@ -197,7 +217,7 @@ addBtn.addEventListener('click', ()=>{
   let keyTry = findPantryKeyFromLabel(raw) || null;
   let expiryDays = keyTry ? pantry[keyTry].expiry : 7;
   let expiry = expiryInput.value || (()=>{ const d=new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0]; })();
-  items.push({name:raw, expiry, key:keyTry});
+  items.push({name:raw, expiry, key:keyTry, lastNotified:null});
   itemNameInput.value=''; expiryInput.value='';
   renderItems();
 });
@@ -206,7 +226,7 @@ addBtn.addEventListener('click', ()=>{
 document.getElementById('homeBtn').addEventListener('click', ()=> renderItems());
 document.getElementById('expiryBtn').addEventListener('click', ()=> renderItems(i=>daysUntil(i.expiry)<=3));
 document.getElementById('recipesBtn').addEventListener('click', ()=> renderItems(i=>i.key && daysUntil(i.expiry)<=3));
-document.getElementById('trashBtn').addEventListener('click', ()=> showToast("Trash not implemented yet!"));
+document.getElementById('trashBtn').addEventListener('click', ()=> renderItems(null, trashItems));
 
 // Categories submenu toggle
 document.getElementById('categoriesBtn').addEventListener('click', ()=>{
@@ -227,3 +247,4 @@ categorySubmenu.querySelectorAll('button').forEach(btn=>{
 </script>
 </body>
 </html>
+
