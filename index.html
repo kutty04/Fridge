@@ -6,34 +6,54 @@
 <title>FridgeMind — Track Items</title>
 <style>
   :root{
-    --pink:#ffb6c1; --pink-d:#ff9eb3; --warn-bg:#ffd1dc;
-    --card:#fff; --shadow:0 4px 14px rgba(0,0,0,0.08);
+    --bg-gradient: linear-gradient(135deg,#cce7ff 0%,#e7f0ff 100%);
+    --btn-add:#ffb6c1;
+    --btn-delete:#ff4d4d;
+    --card-shadow:0 4px 14px rgba(0,0,0,0.08);
+    --warn-bg:#ffd1dc;
   }
   body{
     margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    background: linear-gradient(135deg,#ffe7f0 0%,#e7f6ff 100%);
+    background: var(--bg-gradient);
     color:#333; padding:24px;
   }
   h1{ text-align:center; margin:6px 0 18px; color:#ff6f9a; }
   .wrap{ max-width:720px; margin:0 auto; }
-  .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); }
+  .card{ background:#fff; border-radius:16px; padding:18px; box-shadow:var(--card-shadow); }
   .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  input[type="text"], input[type="date"]{
+  input[type="text"]{
     padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
   }
   button{
-    background:var(--pink); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600;
+    padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; border:none; color:#fff;
+    transition: all 0.2s ease;
   }
-  button.secondary{ background:#fff; color:#333; border:1px solid #f3dbe2; }
+  #addBtn{
+    background:var(--btn-add);
+    box-shadow: 0 4px 12px rgba(255,182,193,0.4);
+  }
+  #addBtn:hover{
+    box-shadow: 0 0 20px rgba(255,182,193,0.7);
+    transform: translateY(-2px);
+  }
+  .delete-btn{ background:var(--btn-delete); }
+  .delete-btn:hover{ opacity:0.85; transform: translateY(-1px); }
   button:disabled{ opacity:.6; transform:none; cursor:default; }
   .items{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
-  .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+  .item-card{ background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; 
+    background: linear-gradient(120deg, #ffe0f0, #e0f7ff);
+  }
   .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
   .name{ font-weight:700; font-size:15px; }
   .expiry{ color:#666; font-size:14px; }
-  .badge{ background:var(--warn-bg); color:#9b1b2b; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+  .badge{ background:var(--warn-bg); color:#9b1b2b; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px;
+    animation: pulse 1.5s infinite alternate;
+  }
+  @keyframes pulse{
+    0%{ transform: scale(1); opacity:0.8; }
+    100%{ transform: scale(1.05); opacity:1; }
+  }
   .suggest{ font-size:13px; color:#666; font-style:italic; }
-  .delete-btn{ background:#ff6f6f; color:#fff; border-radius:999px; padding:8px 14px; border:none; cursor:pointer; }
   .small{ font-size:12px; color:#777; }
   .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
 </style>
@@ -46,7 +66,6 @@
       <div style="display:flex;gap:10px;flex-direction:column;">
         <div class="row">
           <input id="itemName" type="text" placeholder="Enter item name 🍅" />
-          <input id="expiryDate" type="date" />
           <button id="addBtn">➕ Add</button>
         </div>
       </div>
@@ -56,30 +75,18 @@
   </div>
 
 <script>
-/* Pantry data */
+/* Pantry data with auto expiry days */
 const pantry = {
-  "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"] },
-  "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"] },
-  "potato":   { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"] },
-  "carrot":   { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"] },
-  "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"] },
-  "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"] },
-  "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"] },
-  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"] }
+  "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:5 },
+  "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10 },
+  "potato":   { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14 },
+  "carrot":   { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiry:7 },
+  "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiry:3 },
+  "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"], expiry:3 },
+  "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiry:180 },
+  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:10 }
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
-
-/* Default expiry days for items */
-const defaultExpiryDays = {
-  "milk": 3,
-  "bread": 5,
-  "egg": 10,
-  "tomato": 7,
-  "onion": 14,
-  "potato": 30,
-  "carrot": 10,
-  "rice": 180
-};
 
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
@@ -95,7 +102,6 @@ function findPantryKeyFromLabel(label){
 
 /* UI refs */
 const itemNameInput = document.getElementById('itemName');
-const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
 
@@ -107,25 +113,19 @@ function showToast(msg){
   setTimeout(()=> t.remove(), 2500);
 }
 
-/* Auto-fill expiry date on item input */
-itemNameInput.addEventListener('input', () => {
-  const key = findPantryKeyFromLabel(itemNameInput.value);
-  if(key && defaultExpiryDays[key]){
-    const today = new Date();
-    today.setDate(today.getDate() + defaultExpiryDays[key]);
-    expiryInput.value = today.toISOString().split('T')[0];
-  }
-});
-
 /* Add item */
 addBtn.addEventListener('click', addItem);
 function addItem(){
   const raw = (itemNameInput.value || "").trim();
-  const expiry = expiryInput.value;
-  if(!raw || !expiry){ showToast("Enter name & expiry"); return; }
+  if(!raw){ showToast("Enter item name"); return; }
 
   const keyTry = findPantryKeyFromLabel(raw.toLowerCase()) || null;
-  const dleft = daysUntil(expiry);
+  let expiryDays = keyTry ? pantry[keyTry].expiry : 7; // default 7 days
+  const today = new Date();
+  const expiryDate = new Date(today.getTime() + expiryDays*24*60*60*1000);
+  const expiryStr = expiryDate.toISOString().split('T')[0];
+
+  const dleft = daysUntil(expiryStr);
   const card = document.createElement('div');
   card.className = 'item-card';
 
@@ -144,7 +144,7 @@ function addItem(){
 
   const expiryLine = document.createElement('div');
   expiryLine.className = 'expiry';
-  expiryLine.textContent = `Expiry: ${expiry}`;
+  expiryLine.textContent = `Expiry: ${expiryStr}`;
   info.appendChild(expiryLine);
 
   if(dleft <= 3 && keyTry){
@@ -157,18 +157,16 @@ function addItem(){
     info.appendChild(s);
   }
 
-  /* Delete button */
-  const button = document.createElement('button');
-  button.className = 'delete-btn';
-  button.textContent = '🗑️ Delete';
-  button.addEventListener('click', ()=> card.remove());
+  const delBtn = document.createElement('button');
+  delBtn.className = 'delete-btn';
+  delBtn.textContent = '🗑️ Delete';
+  delBtn.addEventListener('click', ()=> card.remove());
 
   card.appendChild(info);
-  card.appendChild(button);
+  card.appendChild(delBtn);
   itemList.prepend(card);
 
   itemNameInput.value = '';
-  expiryInput.value = '';
 }
 
 function daysUntil(dateStr){
@@ -179,3 +177,4 @@ function daysUntil(dateStr){
 </script>
 </body>
 </html>
+
