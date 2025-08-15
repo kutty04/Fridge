@@ -48,7 +48,8 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .expiry{ color:#666; font-size:14px; }
 .badge{ background:var(--warn-bg); color:#fff; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; cursor:pointer; }
 .suggest{ font-size:13px; color:#666; font-style:italic; }
-.toast{ position:fixed; top:20px; right:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; opacity:0.95; }
+.toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px 16px; border-radius:999px; font-size:13px; z-index:999; opacity:0.95; margin-top:6px; animation:fadein 0.3s ease-out; }
+@keyframes fadein{ from {opacity:0; transform:translateX(-50%) translateY(10px);} to {opacity:0.95; transform:translateX(-50%) translateY(0);} }
 .toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:12; }
 #notifBtnTop{ position:fixed; top:20px; right:20px; background:var(--mint); color:#333; border:1px solid #f3dbe2; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; z-index:12; }
 </style>
@@ -119,11 +120,18 @@ toggleMenu.addEventListener('click', ()=>{
   mainContent.classList.toggle('shift');
 });
 
+function showToast(msg){
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=> t.remove(),3000);
+}
+
 notifBtnTop.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
     new Notification("FridgeMind", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
     new Audio('https://www.soundjay.com/button/beep-07.wav').play();
+    showToast("Test notification sent!");
   }
 });
 
@@ -139,7 +147,6 @@ function findPantryKeyFromLabel(label){
   return null;
 }
 function daysUntil(dateStr){ const t=new Date(); const e=new Date(dateStr); return Math.ceil((e-t)/(1000*60*60*24)); }
-function showToast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
 
 function renderItems(filterFn=null, listArr=items){
   itemList.innerHTML='';
@@ -188,6 +195,7 @@ function renderItems(filterFn=null, listArr=items){
         items = items.filter(it=>it!==i);
         trashItems.push(i);
         renderItems();
+        showToast(`💔 ${i.name} moved to Trash`);
       });
       card.appendChild(delBtn);
     } else {
@@ -196,11 +204,13 @@ function renderItems(filterFn=null, listArr=items){
         trashItems = trashItems.filter(it=>it!==i);
         items.push(i);
         renderItems();
+        showToast(`💚 ${i.name} restored`);
       });
       const permDelBtn=document.createElement('button'); permDelBtn.className='delete-btn'; permDelBtn.textContent='❌ Delete Permanently';
       permDelBtn.addEventListener('click', ()=>{
         trashItems = trashItems.filter(it=>it!==i);
         renderItems(null, trashItems);
+        showToast(`💀 ${i.name} deleted permanently`);
       });
       card.appendChild(restoreBtn);
       card.appendChild(permDelBtn);
@@ -213,13 +223,14 @@ function renderItems(filterFn=null, listArr=items){
 /* Add item */
 addBtn.addEventListener('click', ()=>{
   let raw = itemNameInput.value.trim();
-  if(!raw){ showToast("Enter item name"); return; }
+  if(!raw){ showToast("⚠️ Enter item name!"); return; }
   let keyTry = findPantryKeyFromLabel(raw) || null;
   let expiryDays = keyTry ? pantry[keyTry].expiry : 7;
   let expiry = expiryInput.value || (()=>{ const d=new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0]; })();
   items.push({name:raw, expiry, key:keyTry, lastNotified:null});
   itemNameInput.value=''; expiryInput.value='';
   renderItems();
+  showToast(`✨ ${raw} added to your fridge!`);
 });
 
 /* Sidebar button functions */
@@ -242,9 +253,11 @@ categorySubmenu.querySelectorAll('button').forEach(btn=>{
       if(cat==='Other') return !Object.values(pantry).map(p=>p.category).includes(c);
       return c===cat;
     });
+    showToast(`🔍 Filtered by ${cat}`);
   });
 });
 </script>
 </body>
 </html>
+
 
