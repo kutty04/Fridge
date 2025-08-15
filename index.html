@@ -89,52 +89,87 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 </div>
 
 <script>
+/* Pantry + Other Items */
 const pantry = {
-  "tomato":   { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables" },
-  "onion":    { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables" },
-  "potato":   { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14, category:"Vegetables" },
-  "carrot":   { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiry:7, category:"Vegetables" },
-  "bread":    { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiry:3, category:"Bakery" },
-  "milk":     { emoji:"🥛", recipes:["Make Paneer","Kheer"], expiry:3, category:"Dairy" },
-  "rice":     { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiry:180, category:"Grains" },
-  "egg":      { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:10, category:"Dairy" },
-  "apple":    { emoji:"🍎", recipes:["Apple Pie","Apple Halwa"], expiry:14, category:"Fruits" }
+  // Vegetables
+  "tomato":{emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables"},
+  "onion":{emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables"},
+  "potato":{emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14, category:"Vegetables"},
+  "carrot":{emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiry:7, category:"Vegetables"},
+  "beans":{emoji:"🥬", recipes:["Beans Poriyal","Beans Curry"], expiry:7, category:"Vegetables"},
+  "brinjal":{emoji:"🍆", recipes:["Brinjal Curry","Brinjal Poriyal"], expiry:7, category:"Vegetables"},
+  "capsicum":{emoji:"🌶️", recipes:["Capsicum Masala","Stuffed Capsicum"], expiry:7, category:"Vegetables"},
+  "cabbage":{emoji:"🥬", recipes:["Cabbage Poriyal","Cabbage Sabzi"], expiry:7, category:"Vegetables"},
+  "spinach":{emoji:"🥬", recipes:["Palak Paneer","Spinach Dal"], expiry:5, category:"Vegetables"},
+  // Fruits
+  "apple":{emoji:"🍎", recipes:["Apple Pie","Apple Halwa"], expiry:14, category:"Fruits"},
+  "mango":{emoji:"🥭", recipes:["Mango Shake","Mango Halwa"], expiry:10, category:"Fruits"},
+  "banana":{emoji:"🍌", recipes:["Banana Bread","Banana Smoothie"], expiry:7, category:"Fruits"},
+  "orange":{emoji:"🍊", recipes:["Orange Juice","Orange Halwa"], expiry:7, category:"Fruits"},
+  "papaya":{emoji:"🥭", recipes:["Papaya Halwa","Papaya Juice"], expiry:7, category:"Fruits"},
+  "pomegranate":{emoji:"🍎", recipes:["Pomegranate Juice","Pomegranate Raita"], expiry:7, category:"Fruits"},
+  "grapes":{emoji:"🍇", recipes:["Grape Juice","Grape Jam"], expiry:7, category:"Fruits"},
+  // Dairy
+  "milk":{emoji:"🥛", recipes:["Paneer","Kheer"], expiry:3, category:"Dairy"},
+  "curd":{emoji:"🥛", recipes:["Curd Rice","Curd Parfait"], expiry:5, category:"Dairy"},
+  "paneer":{emoji:"🧀", recipes:["Paneer Butter Masala","Palak Paneer"], expiry:7, category:"Dairy"},
+  "butter":{emoji:"🧈", recipes:["Butter Toast","Butter Chicken"], expiry:10, category:"Dairy"},
+  // Grains / Bakery
+  "rice":{emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiry:180, category:"Grains"},
+  "bread":{emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiry:3, category:"Grains"},
+  "roti":{emoji:"🥖", recipes:["Roti Wrap","Roti Sabzi"], expiry:3, category:"Grains"},
+  // Other / Cooked dishes / leftovers
+  "egg":{emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:5, category:"Other"},
+  "chicken curry":{emoji:"🍗", recipes:[], expiry:3, category:"Other"},
+  "mutton curry":{emoji:"🥩", recipes:[], expiry:3, category:"Other"},
+  "pav":{emoji:"🍔", recipes:[], expiry:2, category:"Other"},
+  "sandwich":{emoji:"🥪", recipes:[], expiry:2, category:"Other"},
+  "pizza":{emoji:"🍕", recipes:[], expiry:2, category:"Other"},
+  "dosa":{emoji:"🥞", recipes:[], expiry:2, category:"Other"},
+  "idli":{emoji:"🍛", recipes:[], expiry:2, category:"Other"},
+  "sambar":{emoji:"🥣", recipes:[], expiry:2, category:"Other"},
+  "rasam":{emoji:"🍲", recipes:[], expiry:2, category:"Other"},
+  "upma":{emoji:"🥘", recipes:[], expiry:2, category:"Other"},
+  "uttapam":{emoji:"🥞", recipes:[], expiry:2, category:"Other"}
 };
-const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
+const aliases = {"tomatoes":"tomato","potatoes":"potato"};
+
+/* UI refs */
 const sidebar = document.getElementById('sidebar');
 const toggleMenu = document.querySelector('.toggle-menu');
-const mainContent = document.getElementById('mainContent');
 const itemNameInput = document.getElementById('itemName');
 const expiryInput = document.getElementById('expiryDate');
 const addBtn = document.getElementById('addBtn');
 const itemList = document.getElementById('itemList');
 const notifBtnTop = document.getElementById('notifBtnTop');
+const mainContent = document.getElementById('mainContent');
+const categoriesBtn = document.getElementById('categoriesBtn');
 const categorySubmenu = document.getElementById('categorySubmenu');
 
-let items = [];
-let trashItems = [];
+/* Trash */
+let trash = [];
 
+/* Toggle sidebar */
 toggleMenu.addEventListener('click', ()=>{
   sidebar.classList.toggle('show');
   mainContent.classList.toggle('shift');
 });
 
-function showToast(msg){
-  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=> t.remove(),3000);
-}
+/* Toggle categories submenu */
+categoriesBtn.addEventListener('click', ()=>categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex');
 
+/* Notification */
 notifBtnTop.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
-    new Notification("FridgeMind", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
-    new Audio('https://www.soundjay.com/button/beep-07.wav').play();
-    showToast("Test notification sent!");
+    const notif = new Notification("FridgeMind Test", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
+    const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
+    audio.play();
   }
 });
 
+/* Helpers */
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
   if(!label) return null;
@@ -146,116 +181,106 @@ function findPantryKeyFromLabel(label){
   }
   return null;
 }
-function daysUntil(dateStr){ const t=new Date(); const e=new Date(dateStr); return Math.ceil((e-t)/(1000*60*60*24)); }
-
-function renderItems(filterFn=null, listArr=items){
-  itemList.innerHTML='';
-  const list = filterFn ? listArr.filter(filterFn) : listArr;
-  list.forEach(i=>{
-    const dleft = daysUntil(i.expiry);
-    const card = document.createElement('div'); card.className='item-card';
-    const info = document.createElement('div'); info.className='info';
-    
-    if(listArr===items && dleft<=3){
-      const today = new Date().toDateString();
-      if(!i.lastNotified || i.lastNotified!==today){
-        if(Notification.permission==='granted'){
-          new Notification("FridgeMind", { body:`${i.name} is near expiry!`, icon:"https://i.imgur.com/8QfU5Yq.png" });
-          new Audio('https://www.soundjay.com/button/beep-07.wav').play();
-        }
-        i.lastNotified = today;
-      }
-      const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`;
-      if(i.key && pantry[i.key] && pantry[i.key].recipes.length>0){
-        b.style.cursor='pointer';
-        b.onclick=()=>{ 
-          const pick = pantry[i.key].recipes[Math.floor(Math.random()*pantry[i.key].recipes.length)];
-          window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`,'_blank');
-        };
-      }
-      info.appendChild(b);
-    }
-    
-    const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=i.name; info.appendChild(nameLine);
-    const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${i.expiry}`; info.appendChild(expiryLine);
-    
-    if(listArr===items && dleft<=3 && i.key){
-      const pool=pantry[i.key].recipes;
-      const pick=pool[Math.floor(Math.random()*pool.length)];
-      const link=`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`;
-      const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
-      info.appendChild(s);
-    }
-    
-    card.appendChild(info);
-
-    if(listArr===items){
-      const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
-      delBtn.addEventListener('click', ()=>{
-        items = items.filter(it=>it!==i);
-        trashItems.push(i);
-        renderItems();
-        showToast(`💔 ${i.name} moved to Trash`);
-      });
-      card.appendChild(delBtn);
-    } else {
-      const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
-      restoreBtn.addEventListener('click', ()=>{
-        trashItems = trashItems.filter(it=>it!==i);
-        items.push(i);
-        renderItems();
-        showToast(`💚 ${i.name} restored`);
-      });
-      const permDelBtn=document.createElement('button'); permDelBtn.className='delete-btn'; permDelBtn.textContent='❌ Delete Permanently';
-      permDelBtn.addEventListener('click', ()=>{
-        trashItems = trashItems.filter(it=>it!==i);
-        renderItems(null, trashItems);
-        showToast(`💀 ${i.name} deleted permanently`);
-      });
-      card.appendChild(restoreBtn);
-      card.appendChild(permDelBtn);
-    }
-
-    itemList.appendChild(card);
-  });
+function daysUntil(dateStr){
+  const t = new Date();
+  const e = new Date(dateStr);
+  return Math.ceil((e - t) / (1000*60*60*24));
+}
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=> t.remove(),2500);
 }
 
 /* Add item */
-addBtn.addEventListener('click', ()=>{
+addBtn.addEventListener('click', addItem);
+function addItem(){
   let raw = itemNameInput.value.trim();
-  if(!raw){ showToast("⚠️ Enter item name!"); return; }
-  let keyTry = findPantryKeyFromLabel(raw) || null;
-  let expiryDays = keyTry ? pantry[keyTry].expiry : 7;
-  let expiry = expiryInput.value || (()=>{ const d=new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0]; })();
-  items.push({name:raw, expiry, key:keyTry, lastNotified:null});
+  if(!raw) { showToast("Enter item name"); return; }
+  let keyTry = findPantryKeyFromLabel(raw.toLowerCase()) || null;
+  let expiryDays = keyTry ? pantry[keyTry].expiry : 3;
+  let expiry = expiryInput.value || (()=>{ const d = new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0]; })();
+
+  const dleft = daysUntil(expiry);
+  const card = document.createElement('div'); card.className='item-card';
+  const info = document.createElement('div'); info.className='info';
+  if(dleft<=3){ const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b); 
+    // Device notification
+    const notifKey = keyTry || raw.toLowerCase();
+    if(!localStorage.getItem('notif_'+notifKey)){ 
+      if(Notification.permission==='granted'){
+        new Notification("FridgeMind Alert", { body:`${raw} is near expiry!`, icon:"https://i.imgur.com/8QfU5Yq.png" });
+      }
+      localStorage.setItem('notif_'+notifKey,new Date().toISOString());
+    }
+  }
+  const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=raw; info.appendChild(nameLine);
+  const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${expiry}`; info.appendChild(expiryLine);
+
+  // Recipe suggestion
+  if(dleft<=3 && keyTry && pantry[keyTry].recipes.length>0){
+    const pool=pantry[keyTry].recipes;
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    const link=`https://www.youtube.com/results?search_query=${encodeURIComponent(pick+' recipe')}`;
+    const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🍳 Suggestion: <a href="${link}" target="_blank">${pick}</a>`;
+    info.appendChild(s);
+  }
+
+  const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
+  delBtn.addEventListener('click', ()=>{
+    card.remove(); trash.push({name:raw, expiry:expiry, key:keyTry}); showToast(`${raw} moved to Trash`);
+  });
+
+  card.appendChild(info); card.appendChild(delBtn);
+  itemList.prepend(card);
   itemNameInput.value=''; expiryInput.value='';
-  renderItems();
-  showToast(`✨ ${raw} added to your fridge!`);
-});
+}
 
-/* Sidebar button functions */
-document.getElementById('homeBtn').addEventListener('click', ()=> renderItems());
-document.getElementById('expiryBtn').addEventListener('click', ()=> renderItems(i=>daysUntil(i.expiry)<=3));
-document.getElementById('recipesBtn').addEventListener('click', ()=> renderItems(i=>i.key && daysUntil(i.expiry)<=3));
-document.getElementById('trashBtn').addEventListener('click', ()=> renderItems(null, trashItems));
-
-// Categories submenu toggle
-document.getElementById('categoriesBtn').addEventListener('click', ()=>{
-  categorySubmenu.style.display = categorySubmenu.style.display==='flex' ? 'none' : 'flex';
-});
-// Categories filter
+/* Category filter */
 categorySubmenu.querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const cat = btn.dataset.cat;
-    renderItems(i=>{
-      if(!i.key) return cat==='Other';
-      const c = pantry[i.key]?.category || 'Other';
-      if(cat==='Other') return !Object.values(pantry).map(p=>p.category).includes(c);
-      return c===cat;
+    [...itemList.children].forEach(c=>{
+      const itemName = c.querySelector('.name').textContent.toLowerCase();
+      const key = findPantryKeyFromLabel(itemName);
+      if(!key) c.style.display = cat==='Other'? 'flex':'none';
+      else c.style.display = pantry[key].category===cat ? 'flex' : 'none';
     });
-    showToast(`🔍 Filtered by ${cat}`);
+    showToast(`Filtered by ${cat}`);
   });
 });
+
+/* Trash list */
+document.getElementById('trashBtn').addEventListener('click', ()=>{
+  itemList.innerHTML='';
+  if(trash.length===0){ showToast("Trash is empty"); return; }
+  trash.forEach(t=>{
+    const card = document.createElement('div'); card.className='item-card';
+    const info = document.createElement('div'); info.className='info';
+    const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=t.name; info.appendChild(nameLine);
+    const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${t.expiry}`; info.appendChild(expiryLine);
+    const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
+    restoreBtn.addEventListener('click', ()=>{
+      addItemFromTrash(t); card.remove(); trash = trash.filter(x=>x!==t);
+    });
+    card.appendChild(info); card.appendChild(restoreBtn);
+    itemList.appendChild(card);
+  });
+});
+
+/* Restore helper */
+function addItemFromTrash(t){
+  const card = document.createElement('div'); card.className='item-card';
+  const info = document.createElement('div'); info.className='info';
+  const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=t.name; info.appendChild(nameLine);
+  const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${t.expiry}`; info.appendChild(expiryLine);
+  const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
+  delBtn.addEventListener('click', ()=>{ card.remove(); trash.push(t); showToast(`${t.name} moved to Trash`); });
+  card.appendChild(info); card.appendChild(delBtn);
+  itemList.prepend(card);
+  showToast(`${t.name} restored`);
+}
 </script>
 </body>
 </html>
