@@ -54,6 +54,59 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; width:100%; max-width:500px; display:none; flex-direction:column; }
 .analytics-header{ display:flex; justify-content:space-between; cursor:pointer; align-items:center; }
 .analytics-content{ display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
+  <!-- Add this inside your analytics-panel, below analyticsContent -->
+<canvas id="analyticsChart" style="max-width:500px; margin-top:16px;"></canvas>
+
+<!-- Add Chart.js before closing body -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function renderAnalyticsChart(){
+  const ctx = document.getElementById('analyticsChart').getContext('2d');
+  const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
+  const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
+
+  const categories = { "Vegetables":0, "Fruits":0, "Dairy":0, "Grains":0, "Other":0 };
+  allItems.forEach(i=>{
+    if(!trash.includes(i)){
+      const key = i.key;
+      const cat = key && pantry[key]? pantry[key].category : "Other";
+      categories[cat]++; 
+    }
+  });
+
+  if(window.fridgeChart) fridgeChart.destroy(); // remove old chart
+  window.fridgeChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['Today Expiring','This Week','Vegetables','Fruits','Dairy','Grains','Other'],
+      datasets:[{
+        label:'Items Count',
+        data:[todayCount, weekCount, categories.Vegetables, categories.Fruits, categories.Dairy, categories.Grains, categories.Other],
+        backgroundColor:[
+          '#FFB6C1','#FFD1DC','#A8E6CF','#FFECB3','#D8BFD8','#B0E0E6','#FFC0CB'
+        ],
+        borderRadius:8
+      }]
+    },
+    options:{
+      plugins:{ legend:{ display:false } },
+      scales:{
+        y:{ beginAtZero:true, ticks:{stepSize:1} }
+      }
+    }
+  });
+}
+
+// Update chart whenever analytics updates
+function updateAnalytics(){
+  // existing analytics code...
+  const todayCount = allItems.filter(i=>daysUntil(i.expiry)===0 && !trash.includes(i)).length;
+  const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
+  // ...rest of existing code
+  renderAnalyticsChart(); // <-- call chart rendering
+}
+</script>
+
 .analytics-card{ background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 2px 6px rgba(0,0,0,.08); flex:1 1 120px; text-align:center; }
 .analytics-card h4{ margin:0 0 6px; font-size:14px; color:#666; }
 .analytics-card p{ margin:0; font-weight:700; font-size:16px; color:#333; }
