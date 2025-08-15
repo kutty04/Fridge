@@ -136,13 +136,12 @@ function addItem(){
     info.appendChild(s);
   }
 
+  // Delete button instead of Used
   const button = document.createElement('button');
   button.className = 'used-btn';
-  button.textContent = '✅ Used';
-  button.addEventListener('click', ()=>{
-    card.classList.add('used-card');
-    info.innerHTML = `${raw} 🌟 Used!`;
-    button.remove();
+  button.textContent = '🗑️ Delete';
+  button.addEventListener('click', () => {
+    card.remove(); // remove the item card completely
   });
 
   card.appendChild(info);
@@ -161,3 +160,4 @@ function daysUntil(dateStr){
 </script>
 </body>
 </html>
+
