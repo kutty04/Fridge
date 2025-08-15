@@ -6,7 +6,7 @@
 <title>FridgeMind — Dashboard</title>
 <style>
 :root{
-  --bg-main:#E6E6FA; 
+  --bg-main:#E6E6FA; /* lavender */
   --card:#F7F4FA;
   --pink:#FFB6C1; 
   --pink-gradient: linear-gradient(135deg, #FFB6C1, #FFC0CB);
@@ -17,9 +17,11 @@
 }
 body{
   margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background: var(--bg-main); color:#333; padding:0; transition:0.3s;
+  background: var(--bg-main);
+  color:#333; padding:0;
 }
 h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
+.wrap{ max-width:960px; margin:0 auto; padding:20px; display:flex; gap:20px; }
 .sidebar{
   width:220px; background:#D8BFD8; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px; height:90vh;
   position:fixed; top:20px; left:-240px; transition:0.3s; z-index:10;
@@ -27,10 +29,7 @@ h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
 .sidebar.show{ left:20px; }
 .sidebar button{ padding:10px; border:none; border-radius:12px; cursor:pointer; font-weight:600; background:var(--pink); color:#fff; text-align:left; }
 .sidebar button.delete{ background:var(--red); }
-.submenu{ display:none; flex-direction:column; gap:6px; padding-left:10px; }
-.submenu button{ background:var(--mint); color:#333; font-weight:500; }
-.main{ flex:1; margin-left:20px; transition:0.3s; }
-.main.shift{ margin-left:260px; }
+.main{ flex:1; margin-left:240px; transition:0.3s; }
 .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; }
 .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
 input[type="text"], input[type="date"]{
@@ -46,35 +45,41 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .info{ display:flex; flex-direction:column; gap:6px; min-width:220px; }
 .name{ font-weight:700; font-size:15px; }
 .expiry{ color:#666; font-size:14px; }
-.badge{ background:var(--warn-bg); color:#fff; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; cursor:pointer; }
+.badge{ background:var(--warn-bg); color:#fff; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
 .suggest{ font-size:13px; color:#666; font-style:italic; }
-.toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px 16px; border-radius:999px; font-size:13px; z-index:999; opacity:0.95; margin-top:6px; animation:fadein 0.3s ease-out; }
-@keyframes fadein{ from {opacity:0; transform:translateX(-50%) translateY(10px);} to {opacity:0.95; transform:translateX(-50%) translateY(0);} }
-.toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:12; }
-#notifBtnTop{ position:fixed; top:20px; right:20px; background:var(--mint); color:#333; border:1px solid #f3dbe2; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; z-index:12; }
+.small{ font-size:12px; color:#777; }
+.toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
+.toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:11; }
+.test-notif{ position:fixed; top:20px; right:20px; background:var(--mint); color:#333; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:12; }
+.analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; }
+.analytics-header{ display:flex; justify-content:space-between; cursor:pointer; align-items:center; }
+.analytics-content{ display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
+.analytics-card{ background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 2px 6px rgba(0,0,0,.08); flex:1 1 120px; }
+.analytics-card h4{ margin:0 0 6px; font-size:14px; color:#666; }
+.analytics-card p{ margin:0; font-weight:700; font-size:16px; color:#333; }
 </style>
 </head>
 <body>
 
 <button class="toggle-menu">☰ Menu</button>
-<button id="notifBtnTop">🔔 Test Notification</button>
+<button class="test-notif" id="testNotifBtn">🔔 Test Notification</button>
 
 <div class="sidebar" id="sidebar">
   <button id="homeBtn">🏠 Home / Dashboard</button>
-  <button id="categoriesBtn">🥛 Categories ▼</button>
-  <div class="submenu" id="categorySubmenu">
-    <button data-cat="Dairy">Dairy</button>
-    <button data-cat="Grains">Grains</button>
-    <button data-cat="Vegetables">Vegetables</button>
-    <button data-cat="Fruits">Fruits</button>
-    <button data-cat="Other">Other</button>
+  <button id="categoriesBtn">🥛 Categories</button>
+  <div id="categorySubmenu" style="display:none; flex-direction:column; gap:6px; margin-left:12px;">
+    <button data-cat="Vegetables">🥕 Vegetables</button>
+    <button data-cat="Fruits">🍎 Fruits</button>
+    <button data-cat="Dairy">🥛 Dairy</button>
+    <button data-cat="Grains">🍚 Grains</button>
+    <button data-cat="Other">🍲 Other</button>
   </div>
   <button id="expiryBtn">⚠️ Near Expiry</button>
   <button id="recipesBtn">🍳 Recipe Suggestions</button>
   <button id="trashBtn" class="delete">🗑️ Trash / Deleted Items</button>
 </div>
 
-<div class="main" id="mainContent">
+<div class="main">
   <h1>🥕 FridgeMind — Track Items</h1>
 
   <div class="card">
@@ -85,99 +90,136 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
     </div>
   </div>
 
+  <!-- Analytics Panel -->
+  <div class="analytics-panel" id="analyticsPanel">
+    <div class="analytics-header">
+      <h3>📊 Fridge Analytics</h3>
+      <span id="toggleAnalytics" style="font-size:18px; cursor:pointer;">▼</span>
+    </div>
+    <div class="analytics-content" id="analyticsContent">
+      <!-- Cards populated dynamically -->
+    </div>
+  </div>
+
   <div class="items" id="itemList"></div>
 </div>
 
 <script>
-/* Pantry + Other Items */
+/* Pantry data */
 const pantry = {
-  "tomato":{emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables"},
-  "onion":{emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables"},
-  "potato":{emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14, category:"Vegetables"},
-  "carrot":{emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiry:7, category:"Vegetables"},
-  "milk":{emoji:"🥛", recipes:["Paneer","Kheer"], expiry:3, category:"Dairy"},
-  "curd":{emoji:"🥛", recipes:["Curd Rice","Curd Parfait"], expiry:5, category:"Dairy"},
-  "paneer":{emoji:"🧀", recipes:["Paneer Butter Masala","Palak Paneer"], expiry:7, category:"Dairy"},
-  "bread":{emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiry:3, category:"Grains"},
-  "rice":{emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiry:180, category:"Grains"},
-  "egg":{emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:5, category:"Other"},
-  "pizza":{emoji:"🍕", recipes:[], expiry:2, category:"Other"},
-  "sandwich":{emoji:"🥪", recipes:[], expiry:2, category:"Other"},
-  "chicken curry":{emoji:"🍗", recipes:[], expiry:3, category:"Other"},
-  "mutton curry":{emoji:"🥩", recipes:[], expiry:3, category:"Other"},
+  "tomato": { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables" },
+  "onion": { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables" },
+  "potato": { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14, category:"Vegetables" },
+  "carrot": { emoji:"🥕", recipes:["Carrot Halwa","Carrot Poriyal"], expiry:7, category:"Vegetables" },
+  "bread": { emoji:"🍞", recipes:["Bread Upma","Bread Pakora"], expiry:3, category:"Grains" },
+  "milk": { emoji:"🥛", recipes:["Make Paneer","Kheer"], expiry:3, category:"Dairy" },
+  "curd": { emoji:"🥛", recipes:["Curd Rice","Raita"], expiry:5, category:"Dairy" },
+  "rice": { emoji:"🍚", recipes:["Lemon Rice","Curd Rice"], expiry:180, category:"Grains" },
+  "egg": { emoji:"🥚", recipes:["Egg Curry","Egg Bhurji"], expiry:10, category:"Other" },
+  "paneer": { emoji:"🧀", recipes:["Paneer Butter Masala","Paneer Bhurji"], expiry:7, category:"Dairy" },
+  "mango": { emoji:"🥭", recipes:["Mango Lassi","Mango Pickle"], expiry:5, category:"Fruits" },
+  "apple": { emoji:"🍎", recipes:["Apple Halwa","Apple Juice"], expiry:10, category:"Fruits" },
+  // Cooked dishes
+  "chicken curry": { emoji:"🍗", recipes:["Chicken Curry Rice","Chicken Sandwich"], expiry:2, category:"Other" },
+  "mutton curry": { emoji:"🥩", recipes:["Mutton Biryani","Mutton Wrap"], expiry:2, category:"Other" },
+  "pizza": { emoji:"🍕", recipes:["Pizza Sandwich","Pizza Toast"], expiry:2, category:"Other" },
+  "pav": { emoji:"🥖", recipes:["Pav Bhaji","Pav Sandwich"], expiry:2, category:"Other" },
+  "sandwich": { emoji:"🥪", recipes:["Grilled Sandwich","Open Sandwich"], expiry:2, category:"Other" }
 };
-
-/* Aliases and data arrays */
-const aliases={"tomatoes":"tomato","potatoes":"potato"};
-let allItems=[]; 
-let trash=[];
+const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
 /* UI refs */
-const sidebar=document.getElementById('sidebar');
-const toggleMenu=document.querySelector('.toggle-menu');
-const itemNameInput=document.getElementById('itemName');
-const expiryInput=document.getElementById('expiryDate');
-const addBtn=document.getElementById('addBtn');
-const itemList=document.getElementById('itemList');
-const notifBtnTop=document.getElementById('notifBtnTop');
-const mainContent=document.getElementById('mainContent');
-const categoriesBtn=document.getElementById('categoriesBtn');
-const categorySubmenu=document.getElementById('categorySubmenu');
-const homeBtn=document.getElementById('homeBtn');
-const expiryBtn=document.getElementById('expiryBtn');
-const recipesBtn=document.getElementById('recipesBtn');
-const trashBtn=document.getElementById('trashBtn');
+const sidebar = document.getElementById('sidebar');
+const toggleMenu = document.querySelector('.toggle-menu');
+const itemNameInput = document.getElementById('itemName');
+const expiryInput = document.getElementById('expiryDate');
+const addBtn = document.getElementById('addBtn');
+const itemList = document.getElementById('itemList');
+const testNotifBtn = document.getElementById('testNotifBtn');
+const analyticsPanel = document.getElementById('analyticsPanel');
+const analyticsContent = document.getElementById('analyticsContent');
+const toggleAnalytics = document.getElementById('toggleAnalytics');
+const homeBtn = document.getElementById('homeBtn');
+const trashBtn = document.getElementById('trashBtn');
+const expiryBtn = document.getElementById('expiryBtn');
+const recipesBtn = document.getElementById('recipesBtn');
+const categoriesBtn = document.getElementById('categoriesBtn');
+const categorySubmenu = document.getElementById('categorySubmenu');
+
+/* Data storage */
+let allItems = [];
+let trash = [];
 
 /* Toggle sidebar */
-toggleMenu.addEventListener('click', ()=>{
-  sidebar.classList.toggle('show');
-  mainContent.classList.toggle('shift');
+toggleMenu.addEventListener('click', ()=> sidebar.classList.toggle('show'));
+
+/* Toggle analytics */
+toggleAnalytics.addEventListener('click', ()=>{
+  if(analyticsContent.style.display==='none'){ analyticsContent.style.display='flex'; toggleAnalytics.textContent='▼'; }
+  else { analyticsContent.style.display='none'; toggleAnalytics.textContent='▲'; }
 });
 
 /* Toggle categories submenu */
-categoriesBtn.addEventListener('click', ()=>categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex');
+categoriesBtn.addEventListener('click', ()=>{
+  categorySubmenu.style.display = categorySubmenu.style.display==='flex'?'none':'flex';
+});
 
 /* Notification */
-notifBtnTop.addEventListener('click', ()=>{
+testNotifBtn.addEventListener('click', ()=>{
   if(Notification.permission!=='granted') Notification.requestPermission();
   else{
-    new Notification("FridgeMind Test",{body:"This is a test notification!",icon:"https://i.imgur.com/8QfU5Yq.png"});
+    const notif = new Notification("FridgeMind Test", { body:"This is a test notification!", icon:"https://i.imgur.com/8QfU5Yq.png" });
+    const audio = new Audio('https://www.soundjay.com/button/beep-07.wav');
+    audio.play();
   }
 });
 
 /* Helpers */
-function normalize(s){return(s||"").toString().trim().toLowerCase();}
+function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
 function findPantryKeyFromLabel(label){
   if(!label) return null;
-  const L=normalize(label);
+  const L = normalize(label);
   if(aliases[L]) return aliases[L];
   if(pantry[L]) return L;
-  for(const key of Object.keys(pantry)){if(L.includes(key)) return key;}
+  for(const key of Object.keys(pantry)){
+    if(L.includes(key)) return key;
+  }
   return null;
 }
-function daysUntil(dateStr){return Math.ceil((new Date(dateStr)-new Date())/(1000*60*60*24));}
-function showToast(msg){const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500);}
+function daysUntil(dateStr){
+  const t = new Date();
+  const e = new Date(dateStr);
+  return Math.ceil((e - t) / (1000*60*60*24));
+}
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=> t.remove(),2500);
+}
 
 /* Add item */
-addBtn.addEventListener('click', addItem);
+addBtn.addEventListener('click', ()=>addItem());
 function addItem(itemData){
-  let raw=itemData?.name||itemNameInput.value.trim();
-  if(!raw){showToast("Enter item name"); return;}
-  let keyTry=findPantryKeyFromLabel(raw.toLowerCase())||null;
-  let expiryDays=keyTry?pantry[keyTry].expiry:3;
-  let expiry=itemData?.expiry||expiryInput.value||(()=>{ const d=new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0];})();
-  const itemObj={name:raw, expiry:expiry, key:keyTry};
+  let raw = itemData?.name || itemNameInput.value.trim();
+  if(!raw) { showToast("Enter item name"); return; }
+  let keyTry = findPantryKeyFromLabel(raw.toLowerCase()) || null;
+  let expiryDays = keyTry ? pantry[keyTry].expiry : 3;
+  let expiry = itemData?.expiry || expiryInput.value || (()=>{ const d=new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0]; })();
+  const itemObj = { name: raw, expiry: expiry, key: keyTry };
   allItems.push(itemObj);
   renderItem(itemObj);
-  if(!itemData){itemNameInput.value=''; expiryInput.value='';}
+  updateAnalytics();
+  if(!itemData){ itemNameInput.value=''; expiryInput.value=''; }
 }
 
 /* Render individual card */
 function renderItem(obj){
-  const dleft=daysUntil(obj.expiry);
-  const card=document.createElement('div'); card.className='item-card';
-  const info=document.createElement('div'); info.className='info';
-  if(dleft<=3){ const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);
+  const dleft = daysUntil(obj.expiry);
+  const card = document.createElement('div'); card.className='item-card';
+  const info = document.createElement('div'); info.className='info';
+  if(dleft<=3){ 
+    const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);
     const notifKey=obj.key||obj.name.toLowerCase();
     const lastNotif=localStorage.getItem('notif_'+notifKey);
     const today=new Date().toISOString().split('T')[0];
@@ -186,8 +228,8 @@ function renderItem(obj){
       localStorage.setItem('notif_'+notifKey,today);
     }
   }
-  const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
-  const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
+  const nameLine = document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
+  const expiryLine = document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
 
   // Recipe suggestion
   if(dleft<=3 && obj.key && pantry[obj.key].recipes.length>0){
@@ -201,9 +243,39 @@ function renderItem(obj){
   const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
   delBtn.addEventListener('click', ()=>{
     card.remove(); trash.push(obj); showToast(`${obj.name} moved to Trash`);
+    updateAnalytics();
   });
   card.appendChild(info); card.appendChild(delBtn);
   itemList.prepend(card);
+}
+
+/* Update Analytics Panel */
+function updateAnalytics(){
+  const todayCount = allItems.filter(i=>daysUntil(i.expiry)<=0 && !trash.includes(i)).length;
+  const weekCount = allItems.filter(i=>daysUntil(i.expiry)>0 && daysUntil(i.expiry)<=7 && !trash.includes(i)).length;
+  const expiredCount = allItems.filter(i=>daysUntil(i.expiry)<0 && !trash.includes(i)).length;
+
+  const categories = { "Vegetables":0, "Fruits":0, "Dairy":0, "Grains":0, "Other":0 };
+  allItems.forEach(i=>{
+    if(!trash.includes(i)){
+      const key = i.key;
+      const cat = key && pantry[key]? pantry[key].category : "Other";
+      categories[cat]++; 
+    }
+  });
+
+  analyticsContent.innerHTML='';
+  const cards = [
+    {title:"Expiring Today", val:todayCount},
+    {title:"Expiring This Week", val:weekCount},
+    {title:"Expired", val:expiredCount},
+    ...Object.keys(categories).map(c=>({title:c, val:categories[c]}))
+  ];
+  cards.forEach(c=>{
+    const div = document.createElement('div'); div.className='analytics-card';
+    div.innerHTML=`<h4>${c.title}</h4><p>${c.val}</p>`;
+    analyticsContent.appendChild(div);
+  });
 }
 
 /* Menu button actions */
@@ -212,6 +284,7 @@ homeBtn.addEventListener('click', ()=>{
   itemList.innerHTML='';
   allItems.forEach(t=>{ if(!trash.includes(t)) renderItem(t); });
   showToast("🏠 Dashboard");
+  updateAnalytics();
 });
 
 // Trash
@@ -225,7 +298,8 @@ trashBtn.addEventListener('click', ()=>{
     const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${t.expiry}`; info.appendChild(expiryLine);
     const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
     restoreBtn.addEventListener('click', ()=>{
-      addItem(t); card.remove(); trash = trash.filter(x=>x!==t);
+      allItems.push(t); renderItem(t); trash=trash.filter(x=>x!==t); card.remove(); updateAnalytics();
+      showToast(`${t.name} restored`);
     });
     card.appendChild(info); card.appendChild(restoreBtn);
     itemList.appendChild(card);
@@ -233,38 +307,59 @@ trashBtn.addEventListener('click', ()=>{
   showToast("🗑️ Trash Items");
 });
 
-// Categories submenu buttons
-categorySubmenu.querySelectorAll('button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const cat=btn.dataset.cat;
-    itemList.innerHTML='';
-    allItems.forEach(t=>{ 
-      if(!trash.includes(t)){
-        const key=t.key;
-        if((key && pantry[key].category===cat)||(cat==='Other' && (!key || pantry[key].category==='Other'))) renderItem(t);
-      }
-    });
-    showToast(`Filtered by ${cat}`);
-  });
-});
-
-// Near expiry
+// Near Expiry
 expiryBtn.addEventListener('click', ()=>{
   itemList.innerHTML='';
-  allItems.forEach(t=>{
-    if(!trash.includes(t) && daysUntil(t.expiry)<=3) renderItem(t);
-  });
+  allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)).forEach(renderItem);
   showToast("⚠️ Near Expiry Items");
 });
 
-// Recipe Suggestions
+// Recipe suggestions
 recipesBtn.addEventListener('click', ()=>{
   itemList.innerHTML='';
-  allItems.forEach(t=>{
-    if(!trash.includes(t) && t.key && pantry[t.key].recipes.length>0) renderItem(t);
+  const nearExpiring = allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i));
+  if(nearExpiring.length===0){ showToast("No near-expiry items"); return; }
+
+  // individual suggestions
+  nearExpiring.forEach(renderItem);
+
+  // smart recipe combo
+  if(nearExpiring.length>=2){
+    const comboNames = nearExpiring.slice(0,3).map(i=>i.name).join(' + ');
+    const comboCard = document.createElement('div'); comboCard.className='item-card';
+    const info=document.createElement('div'); info.className='info';
+    const s=document.createElement('div'); s.className='suggest';
+    s.innerHTML=`✨ Combo Suggestion: <strong>${comboNames}</strong>`;
+    info.appendChild(s); comboCard.appendChild(info);
+    itemList.prepend(comboCard);
+  }
+
+  // leftover recipes
+  allItems.filter(i=>i.key && pantry[i.key].category==='Other' && !trash.includes(i)).forEach(i=>{
+    const card=document.createElement('div'); card.className='item-card';
+    const info=document.createElement('div'); info.className='info';
+    const s=document.createElement('div'); s.className='suggest'; s.innerHTML=`🥡 Leftover Recipe Idea: ${i.name} can be reused creatively!`;
+    info.appendChild(s); card.appendChild(info); itemList.appendChild(card);
   });
-  showToast("🍳 Recipe Suggestions");
+
+  showToast("🍳 Recipe Magic");
 });
+
+// Category buttons
+categorySubmenu.querySelectorAll('button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const cat = b.dataset.cat;
+    itemList.innerHTML='';
+    allItems.filter(i=>{
+      if(trash.includes(i)) return false;
+      const key=i.key;
+      const c = key && pantry[key]? pantry[key].category : "Other";
+      return c===cat;
+    }).forEach(renderItem);
+    showToast(`📂 ${cat}`);
+  });
+});
+
 </script>
 </body>
 </html>
