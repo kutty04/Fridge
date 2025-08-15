@@ -319,11 +319,31 @@ if(Notification.permission!=='granted') Notification.requestPermission();
 
 // Initialize
 allItems.forEach(renderItem);
+  
+  // ---- Twice daily near-expiry notifications ----
+function sendDailyExpiryNotifications(){
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  
+  // Schedule at 10:00 AM and 6:00 PM
+  if((hours===10 && minutes===0) || (hours===18 && minutes===0)){
+    const nearExpiryItems = allItems.filter(i=>!trash.includes(i) && daysUntil(i.expiry)<=3);
+    if(nearExpiryItems.length){
+      const names = nearExpiryItems.map(i=>i.name).join(', ');
+      notifyDevice("⚠️ Near Expiry Items", `Hurry! ${names} are near expiry!`);
+      playReminderSound();
+    }
+  }
+}
+
+// Check every minute if it's notification time
+setInterval(sendDailyExpiryNotifications, 60*1000);
+
 
 </script>
 </body>
-</html>
-
+</html>// 
 
 
 
