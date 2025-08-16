@@ -435,6 +435,42 @@ setInterval(()=>{
   const now=new Date();
   if(now.getHours()===9 || now.getHours()===18) scheduleExpiryNotifications();
 },60*60*1000); // checks hourly
+  
+  // --- Push Subscription ---
+async function registerPush() {
+  if ("serviceWorker" in navigator && "PushManager" in window) {
+    const reg = await navigator.serviceWorker.register("/sw.js");
+    console.log("✅ Service Worker registered");
+
+    const publicKey = "BEHhptl6TQPR-yEiLJ6kZtxEdHcKAzkPIZSkBUb3nTfkoP34OaskQFwusCfcZvM48ayuHN_FTT2-Vvvp0L_rRc"; // your PUBLIC_VAPID_KEY
+
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+
+    // Send subscription to your server
+    await fetch("http://localhost:4000/subscribe", {
+      method: "POST",
+      body: JSON.stringify(sub),
+      headers: { "Content-Type": "application/json" }
+    });
+    console.log("📩 Subscription sent to server");
+  }
+}
+
+// helper to convert key
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+// Call it at startup
+registerPush();
+
+
 </script>
 
 </body>
