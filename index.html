@@ -6,7 +6,7 @@
 <title>FridgeMind — Dashboard</title>
 <style>
 :root{
-  --bg-main:#E6E6FA;
+  --bg-main:#E6E6FA; /* lavender */
   --card:#F7F4FA;
   --pink:#FFB6C1; 
   --pink-gradient: linear-gradient(135deg, #FFB6C1, #FFC0CB);
@@ -17,7 +17,8 @@
 }
 body{
   margin:0; font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background: var(--bg-main); color:#333; padding:0;
+  background: var(--bg-main);
+  color:#333; padding:0;
 }
 h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
 .wrap{ max-width:960px; margin:0 auto; padding:20px; display:flex; gap:20px; }
@@ -31,7 +32,9 @@ h1{ text-align:center; margin:6px 0 18px; color:#9B59B6; }
 .main{ flex:1; margin-left:240px; transition:0.3s; display:flex; flex-direction:column; align-items:center; }
 .card{ background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); margin-bottom:20px; width:100%; max-width:500px; }
 .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px; }
-input[type="text"], input[type="date"]{ padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1; }
+input[type="text"], input[type="date"]{
+  padding:10px 12px; border-radius:12px; border:1px solid #f3dbe2; font-size:14px; flex:1;
+}
 button.add-btn{ background:var(--pink); background-image: var(--pink-gradient); color:white; border:none; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
 button.secondary{ background:var(--mint); color:#333; border:1px solid #f3dbe2; }
 button.delete-btn{ background:var(--red); color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:600; }
@@ -43,18 +46,19 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 .name{ font-weight:700; font-size:15px; }
 .expiry{ color:#666; font-size:14px; }
 .badge{ background:var(--warn-bg); color:#fff; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
-.suggest{ font-size:13px; color:#666; font-style:italic; }
+.suggest a{ font-size:13px; color:#666; font-style:italic; text-decoration:none; }
+.suggest a:hover{ text-decoration:underline; }
 .small{ font-size:12px; color:#777; }
 .toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#222; color:#fff; padding:8px 14px; border-radius:999px; font-size:13px; z-index:999; }
 .toggle-menu{ position:fixed; top:20px; left:20px; background:var(--pink); color:#fff; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:11; }
 .test-notif{ position:fixed; top:20px; right:20px; background:var(--mint); color:#333; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; z-index:12; }
-.analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; width:100%; max-width:500px; display:none; flex-direction:column; }
+.analytics-panel{ background:#F0E6FA; border-radius:16px; padding:16px; margin-bottom:20px; box-shadow:var(--shadow); transition:0.3s; width:100%; max-width:500px; display:flex; flex-direction:column; }
 .analytics-header{ display:flex; justify-content:space-between; cursor:pointer; align-items:center; }
 .analytics-content{ display:flex; gap:20px; flex-wrap:wrap; margin-top:10px; }
-canvas#analyticsChart{ max-width:500px; margin-top:16px; }
 .analytics-card{ background:#fff; border-radius:12px; padding:12px 14px; box-shadow:0 2px 6px rgba(0,0,0,.08); flex:1 1 120px; text-align:center; }
 .analytics-card h4{ margin:0 0 6px; font-size:14px; color:#666; }
 .analytics-card p{ margin:0; font-weight:700; font-size:16px; color:#333; }
+/* Reminder card */
 .reminder-card{ background:#FFFAF0; border-radius:12px; padding:10px 12px; margin-top:10px; text-align:center; font-weight:600; color:#333; box-shadow:0 2px 6px rgba(0,0,0,.05); font-size:14px; }
 </style>
 </head>
@@ -98,7 +102,7 @@ canvas#analyticsChart{ max-width:500px; margin-top:16px; }
     </div>
     <div class="analytics-content" id="analyticsContent"></div>
     <div id="dailyReminders"></div>
-    <canvas id="analyticsChart"></canvas>
+    <canvas id="analyticsChart" style="max-width:500px; margin-top:16px;"></canvas>
   </div>
 
   <div class="items" id="itemList"></div>
@@ -106,7 +110,7 @@ canvas#analyticsChart{ max-width:500px; margin-top:16px; }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// ---- Pantry Data & Aliases ----
+// ---- Pantry & Aliases ----
 const pantry = {
   "tomato": { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables" },
   "onion": { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables" },
@@ -123,7 +127,7 @@ const pantry = {
 };
 const aliases = { "tomatoes":"tomato","potatoes":"potato" };
 
-// ---- UI Elements ----
+// ---- UI refs ----
 const sidebar = document.getElementById('sidebar');
 const toggleMenu = document.querySelector('.toggle-menu');
 const itemNameInput = document.getElementById('itemName');
@@ -145,7 +149,7 @@ const analyticsBtn = document.getElementById('analyticsBtn');
 
 let allItems = JSON.parse(localStorage.getItem('allItems')||'[]');
 let trash = JSON.parse(localStorage.getItem('trash')||'[]');
-let currentPanel='home';
+let currentPanel = 'home';
 
 // ---- Helpers ----
 function normalize(s){ return (s||"").toString().trim().toLowerCase(); }
@@ -165,7 +169,8 @@ function daysUntil(dateStr){
   return Math.ceil((e - t) / (1000*60*60*24));
 }
 function showToast(msg){
-  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
   setTimeout(()=> t.remove(),2500);
 }
@@ -173,15 +178,14 @@ function saveData(){
   localStorage.setItem('allItems',JSON.stringify(allItems));
   localStorage.setItem('trash',JSON.stringify(trash));
 }
-
-// ---- Notification ----
-function notifyDevice(title,text){
-  if("Notification" in window && Notification.permission==='granted'){
-    new Notification(title,{body:text, icon:"https://i.imgur.com/8QfU5Yq.png"});
+function notifyDevice(title,msg){
+  if(Notification.permission==='granted'){
+    new Notification(title,{body:msg, icon:"https://i.imgur.com/8QfU5Yq.png"});
   }
 }
-function playReminderSound(){ 
-  const audio=new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play();
+function playReminderSound(){
+  const audio=new Audio('https://www.soundjay.com/button/beep-07.wav');
+  audio.play();
 }
 
 // ---- Render Item ----
@@ -190,115 +194,145 @@ function renderItem(obj){
   const card = document.createElement('div'); card.className='item-card';
   const info = document.createElement('div'); info.className='info';
 
-  if(dleft<=3 && currentPanel==='analytics'){ 
-    const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b);
+  if(dleft<=3){ 
+    const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; 
+    info.appendChild(b);
   }
 
-  const nameLine = document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
+  const nameLine=document.createElement('div'); nameLine.className='name'; nameLine.textContent=obj.name; info.appendChild(nameLine);
+  const expiryLine=document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
 
-  const expiryLine = document.createElement('div'); expiryLine.className='expiry'; expiryLine.textContent=`Expiry: ${obj.expiry}`; info.appendChild(expiryLine);
-
-  // Recipe suggestions if near expiry
-  if(dleft<=3 && pantry[obj.key] && currentPanel==='recipes'){
-    pantry[obj.key].recipes.forEach(r=>{
-      const link = document.createElement('a'); link.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(r)}`;
-      link.textContent = r; link.target='_blank'; link.className='suggest';
-      info.appendChild(link);
-    });
+  if(obj.recipes && obj.recipes.length){
+    const rec = document.createElement('div'); rec.className='suggest';
+    rec.innerHTML = obj.recipes.map(r=>`<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(r)}" target="_blank">🍳 ${r}</a>`).join(' | ');
+    info.appendChild(rec);
   }
 
   card.appendChild(info);
 
-  // Delete or Restore buttons
-  if(currentPanel!=='trash'){
-    const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='🗑️ Delete';
-    delBtn.addEventListener('click', ()=>{
-      trash.push(obj); allItems=allItems.filter(i=>i!==obj); saveData(); renderAll(currentPanel); updateAnalytics();
-      showToast(`${obj.name} moved to Trash`);
-    });
-    card.appendChild(delBtn);
-  } else {
-    const restoreBtn=document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='♻️ Restore';
-    restoreBtn.addEventListener('click', ()=>{
-      allItems.push(obj); trash=trash.filter(i=>i!==obj); saveData(); renderAll(currentPanel); updateAnalytics(); showToast(`${obj.name} restored`);
-    });
-    card.appendChild(restoreBtn);
+  const actions = document.createElement('div');
+  if(obj.deleted){
+    const restoreBtn = document.createElement('button'); restoreBtn.className='restore-btn'; restoreBtn.textContent='Restore';
+    restoreBtn.onclick=()=>{ obj.deleted=false; trash=trash.filter(x=>x!==obj); allItems.push(obj); saveData(); renderPanel(currentPanel); };
+    actions.appendChild(restoreBtn);
+  }else{
+    const delBtn=document.createElement('button'); delBtn.className='delete-btn'; delBtn.textContent='Delete';
+    delBtn.onclick=()=>{ obj.deleted=true; trash.push(obj); allItems=allItems.filter(x=>x!==obj); saveData(); renderPanel(currentPanel); };
+    actions.appendChild(delBtn);
   }
+  card.appendChild(actions);
 
-  itemList.appendChild(card);
+  return card;
 }
 
-// ---- Render All ----
-function renderAll(panel){
+// ---- Render Panel ----
+function renderPanel(panel){
   itemList.innerHTML='';
-  if(panel==='home'){ allItems.forEach(renderItem); }
-  else if(panel==='expiry'){ allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)).forEach(renderItem); }
-  else if(panel==='recipes'){ allItems.filter(i=>daysUntil(i.expiry)<=3 && !trash.includes(i)).forEach(renderItem); }
-  else if(panel==='trash'){ trash.forEach(renderItem); }
+  if(panel==='home'){
+    allItems.filter(i=>!i.deleted).forEach(i=>itemList.appendChild(renderItem(i)));
+  }
+  else if(panel==='expiry'){
+    allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).forEach(i=>itemList.appendChild(renderItem(i)));
+  }
+  else if(panel==='recipes'){
+    allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).forEach(i=>itemList.appendChild(renderItem(i)));
+  }
+  else if(panel==='categories'){
+    // simple display all categories
+    const catMap={};
+    allItems.filter(i=>!i.deleted).forEach(i=>{
+      if(!catMap[i.category]) catMap[i.category]=[];
+      catMap[i.category].push(i);
+    });
+    for(const cat of Object.keys(catMap)){
+      const h=document.createElement('h4'); h.textContent=`📂 ${cat}`; itemList.appendChild(h);
+      catMap[cat].forEach(i=>itemList.appendChild(renderItem(i)));
+    }
+  }
+  else if(panel==='trash'){
+    trash.forEach(i=>itemList.appendChild(renderItem(i)));
+  }
 }
+renderPanel('home');
+currentPanel='home';
 
 // ---- Add Item ----
-addBtn.addEventListener('click', ()=>{
+addBtn.onclick=()=>{
   const name=itemNameInput.value.trim();
-  const manualDate=expiryInput.value;
-  if(!name){ showToast('Enter item name'); return; }
-  const key = findPantryKeyFromLabel(name);
-  const expiryDays = key ? pantry[key].expiry : 3;
-  const expiryDate = manualDate || (()=>{ const d=new Date(); d.setDate(d.getDate()+expiryDays); return d.toISOString().split('T')[0]; })();
-  const obj={ name, key, expiry:expiryDate };
-  allItems.push(obj); saveData(); renderAll(currentPanel);
-  showToast(`${name} added!`);
-  notifyDevice('FridgeMind','New item added: '+name);
-  playReminderSound();
+  if(!name){ showToast('Enter item name 😿'); return; }
+  const pantryKey=findPantryKeyFromLabel(name);
+  const today=new Date();
+  let expiry='';
+  if(expiryInput.value) expiry=expiryInput.value;
+  else if(pantryKey) { 
+    const d=today.getTime() + pantry[pantryKey].expiry*24*60*60*1000; 
+    expiry=new Date(d).toISOString().split('T')[0]; 
+  } else { expiry=today.toISOString().split('T')[0]; }
+
+  const recipes=pantryKey? pantry[pantryKey].recipes: [];
+  const category=pantryKey? pantry[pantryKey].category:'Other';
+  const obj={ name, expiry, recipes, category, deleted:false };
+  allItems.push(obj); saveData();
+  renderPanel(currentPanel);
+  notifyDevice('FridgeMind','Added '+name+' 🥳'); playReminderSound();
+  showToast(name+' added! 🍀');
   itemNameInput.value=''; expiryInput.value='';
-});
+};
 
-// ---- Sidebar navigation ----
-toggleMenu.addEventListener('click', ()=> sidebar.classList.toggle('show'));
-homeBtn.addEventListener('click', ()=> { currentPanel='home'; analyticsPanel.style.display='none'; renderAll('home'); });
-categoriesBtn.addEventListener('click', ()=> { currentPanel='categories'; categorySubmenu.style.display=categorySubmenu.style.display==='flex'?'none':'flex'; renderAll('categories'); });
-expiryBtn.addEventListener('click', ()=> { currentPanel='expiry'; analyticsPanel.style.display='none'; renderAll('expiry'); });
-recipesBtn.addEventListener('click', ()=> { currentPanel='recipes'; analyticsPanel.style.display='none'; renderAll('recipes'); });
-analyticsBtn.addEventListener('click', ()=> { currentPanel='analytics'; analyticsPanel.style.display='flex'; renderAll('analytics'); updateAnalytics(); });
-trashBtn.addEventListener('click', ()=> { currentPanel='trash'; analyticsPanel.style.display='none'; renderAll('trash'); });
+// ---- Toggle Menu ----
+toggleMenu.onclick=()=> sidebar.classList.toggle('show');
+categoriesBtn.onclick=()=> categorySubmenu.style.display=categorySubmenu.style.display==='flex'?'none':'flex';
 
-toggleAnalytics.addEventListener('click', ()=> analyticsContent.style.display = analyticsContent.style.display==='flex'?'none':'flex');
+// ---- Menu Buttons ----
+homeBtn.onclick=()=>{ currentPanel='home'; renderPanel('home'); };
+expiryBtn.onclick=()=>{ currentPanel='expiry'; renderPanel('expiry'); };
+recipesBtn.onclick=()=>{ currentPanel='recipes'; renderPanel('recipes'); };
+analyticsBtn.onclick=()=>{ currentPanel='analytics'; renderAnalytics(); };
+trashBtn.onclick=()=>{ currentPanel='trash'; renderPanel('trash'); };
 
 // ---- Analytics ----
-function updateAnalytics(){
+function renderAnalytics(){
+  itemList.innerHTML='';
   analyticsContent.innerHTML='';
-  const total = allItems.length;
-  const near = allItems.filter(i=>daysUntil(i.expiry)<=3).length;
-  const categoriesCount = {};
-  allItems.forEach(i=>{ const cat = i.key && pantry[i.key]?pantry[i.key].category:'Other'; categoriesCount[cat]=(categoriesCount[cat]||0)+1; });
-  ['Vegetables','Fruits','Dairy','Grains','Other'].forEach(cat=>{
-    const c = document.createElement('div'); c.className='analytics-card';
-    c.innerHTML=`<h4>${cat}</h4><p>${categoriesCount[cat]||0}</p>`; analyticsContent.appendChild(c);
-  });
+  const total=allItems.filter(i=>!i.deleted).length;
+  const nearExpiry=allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).length;
+  const deleted=trash.length;
+  const categoriesCount={};
+  allItems.filter(i=>!i.deleted).forEach(i=>{ categoriesCount[i.category]=(categoriesCount[i.category]||0)+1; });
+
+  analyticsContent.appendChild(createAnalyticsCard('Total Items',total));
+  analyticsContent.appendChild(createAnalyticsCard('Near Expiry',nearExpiry));
+  analyticsContent.appendChild(createAnalyticsCard('Deleted',deleted));
+  for(const cat in categoriesCount){ analyticsContent.appendChild(createAnalyticsCard(cat,categoriesCount[cat])); }
 
   // Daily reminders
   dailyRemindersDiv.innerHTML='';
-  allItems.filter(i=>daysUntil(i.expiry)<=3).forEach(i=>{
-    const r = document.createElement('div'); r.className='reminder-card';
-    r.textContent=`🥕 ${i.name} is lonely! Use it today!`; dailyRemindersDiv.appendChild(r);
+  allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).forEach(i=>{
+    const div=document.createElement('div'); div.className='reminder-card'; div.textContent=`🥕 ${i.name} is lonely! Use it today!`;
+    dailyRemindersDiv.appendChild(div);
   });
-
-  // Chart.js
-  const ctx=document.getElementById('analyticsChart').getContext('2d');
-  if(window.chartInstance) window.chartInstance.destroy();
-  window.chartInstance = new Chart(ctx,{type:'bar',data:{labels:Object.keys(categoriesCount),datasets:[{label:'Items',data:Object.values(categoriesCount),backgroundColor:'#FFB6C1'}]},options:{responsive:true}});
+}
+function createAnalyticsCard(title,value){
+  const div=document.createElement('div'); div.className='analytics-card';
+  div.innerHTML=`<h4>${title}</h4><p>${value}</p>`; return div;
 }
 
-// ---- Test notification ----
-testNotifBtn.addEventListener('click', ()=>{ notifyDevice('Test','This is a test notification!'); });
+// ---- Test Notification ----
+testNotifBtn.onclick=()=> notifyDevice('FridgeMind','This is a test notification 🔔');
 
-// ---- Request Notification permission ----
-if("Notification" in window && Notification.permission!=="granted") Notification.requestPermission();
+// ---- Notification Permission ----
+if(Notification.permission!=='granted') Notification.requestPermission();
 
-// ---- Initial render ----
-renderAll(currentPanel);
+// ---- Analytics Toggle ----
+toggleAnalytics.onclick=()=>{ analyticsContent.style.display=analyticsContent.style.display==='flex'?'none':'flex'; dailyRemindersDiv.style.display=dailyRemindersDiv.style.display==='block'?'none':'block'; };
+
+// ---- Daily Notification Interval ----
+setInterval(()=>{
+  allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).forEach(i=>{
+    notifyDevice('FridgeMind','Near expiry: '+i.name+' ⚠️'); 
+  });
+},1000*60*60*12); // every 12 hours
 </script>
-
 </body>
 </html>
 
