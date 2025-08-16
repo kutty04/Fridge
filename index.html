@@ -218,7 +218,14 @@ function showToast(msg){
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2500);
 }
-function saveData(){ localStorage.setItem('allItems',JSON.stringify(allItems)); localStorage.setItem('trash',JSON.stringify(trash)); }
+function loadUserData() {
+  allItems = JSON.parse(localStorage.getItem(`allItems_${userProfile.email}`) || '[]');
+  trash = JSON.parse(localStorage.getItem(`trash_${userProfile.email}`) || '[]');
+}
+function saveUserData() {
+  localStorage.setItem(`allItems_${userProfile.email}`, JSON.stringify(allItems));
+  localStorage.setItem(`trash_${userProfile.email}`, JSON.stringify(trash));
+}
 function notifyDevice(title,msg){ if(Notification.permission==='granted') new Notification(title,{body:msg,icon:'https://i.imgur.com/8QfU5Yq.png'}); }
 function playReminderSound(){ const audio=new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play(); }
 
@@ -240,10 +247,10 @@ function renderItem(obj){
 
   const btns=document.createElement('div'); btns.style.display='flex'; btns.style.gap='6px'; btns.style.flexDirection='column';
   if(!obj.deleted){ 
-    const del=document.createElement('button'); del.className='delete-btn'; del.textContent='🗑️ Delete'; del.onclick=()=>{ obj.deleted=true; trash.push(obj); allItems=allItems.filter(i=>i!==obj); saveData(); renderCurrentPanel(); showToast('Item moved to trash 🗑️'); };
+    const del=document.createElement('button'); del.className='delete-btn'; del.textContent='🗑️ Delete'; del.onclick=()=>{ obj.deleted=true; trash.push(obj); allItems=allItems.filter(i=>i!==obj); saveUserData(); renderCurrentPanel(); showToast('Item moved to trash 🗑️'); };
     btns.appendChild(del);
   } else { 
-    const res=document.createElement('button'); res.className='restore-btn'; res.textContent='♻️ Restore'; res.onclick=()=>{ obj.deleted=false; allItems.push(obj); trash=trash.filter(i=>i!==obj); saveData(); renderCurrentPanel(); showToast('Item restored ♻️'); };
+    const res=document.createElement('button'); res.className='restore-btn'; res.textContent='♻️ Restore'; res.onclick=()=>{ obj.deleted=false; allItems.push(obj); trash=trash.filter(i=>i!==obj); saveUserData(); renderCurrentPanel(); showToast('Item restored ♻️'); };
     btns.appendChild(res);
   }
   card.appendChild(btns);
@@ -313,7 +320,7 @@ addBtn.onclick=()=>{
     deleted:false 
   };
   allItems.push(obj);
-  saveData();
+  saveUserData();
   showToast(`Added ${name} ✅`);
   renderCurrentPanel();
   itemNameInput.value=''; expiryInput.value='';
@@ -374,6 +381,7 @@ function renderProfile(){
   avatarSelect.value = userProfile.avatar;
 }
 renderProfile();
+loadUserData();
 
 // Toggle profile panel
 profileBtn.onclick = () => {
@@ -387,6 +395,9 @@ saveProfileBtn.onclick = () => {
   userProfile.avatar = avatarSelect.value;
   localStorage.setItem('userProfile', JSON.stringify(userProfile));
   renderProfile();
+loadUserData();
+  loadUserData();       // load items for this email
+  renderCurrentPanel(); // refresh UI
   showToast("Profile saved ✅");
 };
 
@@ -394,7 +405,11 @@ saveProfileBtn.onclick = () => {
 logoutBtn.onclick = () => {
   localStorage.removeItem('userProfile');
   userProfile = {name:"Guest", email:"guest@example.com", avatar:"🐶"};
+  allItems = [];
+  trash = [];
   renderProfile();
+loadUserData();
+  renderCurrentPanel();
   showToast("Logged out 🚪");
 };
 
@@ -405,7 +420,7 @@ const clearTrashBtn = document.getElementById('clearTrashBtn');
 clearTrashBtn.onclick = () => {
   if(confirm("Are you sure you want to permanently clear all trash items?")) {
     trash = [];
-    saveData();
+    saveUserData();
     renderCurrentPanel();
     showToast("Trash cleared 🧹");
   }
@@ -424,6 +439,7 @@ setInterval(()=>{
 
 </body>
 </html>
+
 
 
 
