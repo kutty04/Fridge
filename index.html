@@ -449,15 +449,15 @@ async function registerPush() {
       applicationServerKey: urlBase64ToUint8Array(publicKey)
     });
 
-    // Send subscription to your server
     await fetch("http://localhost:4000/subscribe", {
-      method: "POST",
-      body: JSON.stringify(sub),
-      headers: { "Content-Type": "application/json" }
-    });
-    console.log("📩 Subscription sent to server");
-  }
-}
+  method: "POST",
+  body: JSON.stringify({
+    email: userProfile.email,   // dynamic: current logged-in user
+    subscription: sub
+  }),
+  headers: { "Content-Type": "application/json" }
+});
+
 
 // helper to convert key
 function urlBase64ToUint8Array(base64String) {
