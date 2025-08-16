@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,7 +110,6 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
 <script>
 // Pantry data
 const pantry = {
-  // Original
   "tomato": { emoji:"🍅", recipes:["Tomato Chutney","Tomato Rasam","Tomato Rice"], expiry:7, category:"Vegetables" },
   "onion": { emoji:"🧅", recipes:["Onion Chutney","Onion Pakora","Onion Sambar"], expiry:10, category:"Vegetables" },
   "potato": { emoji:"🥔", recipes:["Aloo Curry","Aloo Paratha","Jeera Aloo"], expiry:14, category:"Vegetables" },
@@ -125,18 +123,31 @@ const pantry = {
   "mango": { emoji:"🥭", recipes:["Mango Lassi","Mango Pickle"], expiry:5, category:"Fruits" },
   "apple": { emoji:"🍎", recipes:["Apple Halwa","Apple Juice"], expiry:10, category:"Fruits" },
 
-  // Added Indian items
+  /* --- Added regional staples (South + North) --- */
   "beans": { emoji:"🫘", recipes:["Beans Poriyal","Beans Thoran"], expiry:6, category:"Vegetables" },
   "bhindi": { emoji:"🌿", recipes:["Bhindi Masala","Vendakkai Fry"], expiry:5, category:"Vegetables" },
+  "okra":   { emoji:"🌿", recipes:["Bhindi Masala","Vendakkai Fry"], expiry:5, category:"Vegetables" }, /* alias item */
+  "cabbage": { emoji:"🥬", recipes:["Cabbage Poriyal","Patta Gobhi Sabzi"], expiry:7, category:"Vegetables" },
+  "cauliflower": { emoji:"🥦", recipes:["Gobi 65","Aloo Gobi"], expiry:6, category:"Vegetables" },
+  "green peas": { emoji:"🟢", recipes:["Peas Masala","Matar Paneer"], expiry:5, category:"Vegetables" },
+  "coriander": { emoji:"🌿", recipes:["Garnish","Chutney"], expiry:4, category:"Vegetables" },
+
   "wheat flour": { emoji:"🌾", recipes:["Chapati","Paratha"], expiry:90, category:"Grains" },
+  "rava": { emoji:"🥣", recipes:["Upma","Rava Dosa"], expiry:120, category:"Grains" },
+  "poha": { emoji:"🥣", recipes:["Aval Upma","Poha"], expiry:120, category:"Grains" },
+  "idli rice": { emoji:"🍚", recipes:["Idli","Dosa"], expiry:180, category:"Grains" },
+
   "ghee": { emoji:"🧈", recipes:["Kesari","Dal Tadka"], expiry:30, category:"Dairy" },
   "butter": { emoji:"🧈", recipes:["Butter Naan","Butter Paneer"], expiry:20, category:"Dairy" },
+  "yogurt": { emoji:"🥛", recipes:["Raita","Buttermilk"], expiry:5, category:"Dairy" },
+
   "banana": { emoji:"🍌", recipes:["Banana Fritters","Banana Milkshake"], expiry:5, category:"Fruits" },
+
   "chicken": { emoji:"🍗", recipes:["Chicken Curry","Butter Chicken"], expiry:3, category:"Other" },
   "fish": { emoji:"🐟", recipes:["Fish Fry","Fish Curry"], expiry:2, category:"Other" },
   "mutton": { emoji:"🍖", recipes:["Mutton Curry","Mutton Biryani"], expiry:3, category:"Other" },
 
-  // Leftovers (always 3 days)
+  /* --- Leftovers (always 3 days) --- */
   "sambar": { emoji:"🥣", recipes:["Reheat Sambar","Sambar Idli"], expiry:3, category:"Other" },
   "rasam": { emoji:"🥣", recipes:["Reheat Rasam"], expiry:3, category:"Other" },
   "curd rice": { emoji:"🍚", recipes:["Reheat Curd Rice"], expiry:3, category:"Other" },
@@ -146,14 +157,21 @@ const pantry = {
   "rajma": { emoji:"🥘", recipes:["Reheat Rajma"], expiry:3, category:"Other" },
   "chole": { emoji:"🥘", recipes:["Reheat Chole"], expiry:3, category:"Other" }
 };
-const aliases = { "tomatoes":"tomato","potatoes":"potato" };
+const aliases = {
+  "tomatoes":"tomato","potatoes":"potato",
+  "lady finger":"bhindi","vendakkai":"bhindi","okra":"bhindi",
+  "curdrice":"curd rice","idly rice":"idli rice","semolina":"rava","sooji":"rava","suji":"rava",
+  "matar":"green peas","gobhi":"cauliflower","patta gobhi":"cabbage"
+};
+
+/* NEW: leftover keys list (for quick check) */
+const leftovers = ["sambar","rasam","curd rice","biryani","paneer butter masala","dal tadka","rajma","chole"];
 
 let allItems = JSON.parse(localStorage.getItem('allItems')||'[]');
 let trash = JSON.parse(localStorage.getItem('trash')||'[]');
 let currentPanel = 'home';
 
 // UI refs
-// (same as your original code…)
 const sidebar = document.getElementById('sidebar');
 const toggleMenu = document.querySelector('.toggle-menu');
 const itemNameInput = document.getElementById('itemName');
@@ -195,6 +213,68 @@ function saveData(){ localStorage.setItem('allItems',JSON.stringify(allItems)); 
 function notifyDevice(title,msg){ if(Notification.permission==='granted') new Notification(title,{body:msg,icon:'https://i.imgur.com/8QfU5Yq.png'}); }
 function playReminderSound(){ const audio=new Audio('https://www.soundjay.com/button/beep-07.wav'); audio.play(); }
 
+// --- Render Single Item ---
+function renderItem(obj){
+  const card=document.createElement('div'); card.className='item-card';
+  const info=document.createElement('div'); info.className='info';
+  const dleft = daysUntil(obj.expiry);
+  if(dleft<=3 && !obj.deleted){ const b=document.createElement('div'); b.className='badge'; b.textContent=`⚠️ Near Expiry (${dleft}d)`; info.appendChild(b); }
+  const nameLine=document.createElement('div'); nameLine.className='name'; 
+  const emoji = pantry[obj.key]?.emoji || ''; 
+  nameLine.textContent = `${emoji} ${obj.name}`; info.appendChild(nameLine);
+  const expLine=document.createElement('div'); expLine.className='expiry'; expLine.textContent=`Expires: ${obj.expiry}`; info.appendChild(expLine);
+  if(obj.key && pantry[obj.key]?.recipes && dleft<=3 && !obj.deleted){
+    const rec = pantry[obj.key].recipes[0]; // first recipe
+    const link = document.createElement('a'); link.href=`https://www.youtube.com/results?search_query=${rec.replace(/ /g,'+')}`; link.target="_blank"; link.className='suggest'; link.textContent=`💡 Try: ${rec}`; info.appendChild(link);
+  }
+  card.appendChild(info);
+
+  const btns=document.createElement('div'); btns.style.display='flex'; btns.style.gap='6px'; btns.style.flexDirection='column';
+  if(!obj.deleted){ 
+    const del=document.createElement('button'); del.className='delete-btn'; del.textContent='🗑️ Delete'; del.onclick=()=>{ obj.deleted=true; trash.push(obj); allItems=allItems.filter(i=>i!==obj); saveData(); renderCurrentPanel(); showToast('Item moved to trash 🗑️'); };
+    btns.appendChild(del);
+  } else { 
+    const res=document.createElement('button'); res.className='restore-btn'; res.textContent='♻️ Restore'; res.onclick=()=>{ obj.deleted=false; allItems.push(obj); trash=trash.filter(i=>i!==obj); saveData(); renderCurrentPanel(); showToast('Item restored ♻️'); };
+    btns.appendChild(res);
+  }
+  card.appendChild(btns);
+  return card;
+}
+
+// --- Render Panels ---
+function renderCurrentPanel(){
+  itemList.innerHTML='';
+  analyticsPanel.style.display='none';
+  dailyRemindersDiv.innerHTML='';
+  if(currentPanel==='home'){ allItems.filter(i=>!i.deleted).forEach(i=>itemList.appendChild(renderItem(i))); }
+  else if(currentPanel==='expiry'){ allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).forEach(i=>itemList.appendChild(renderItem(i))); }
+  else if(currentPanel==='recipes'){ allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3 && pantry[i.key]).forEach(i=>itemList.appendChild(renderItem(i))); }
+  else if(currentPanel==='trash'){ trash.forEach(i=>itemList.appendChild(renderItem(i))); }
+  else if(currentPanel==='analytics'){ analyticsPanel.style.display='flex'; renderAnalytics(); }
+  else if(currentPanel==='categories'){ allItems.filter(i=>!i.deleted).forEach(i=>itemList.appendChild(renderItem(i))); }
+}
+
+// --- Analytics ---
+function renderAnalytics(){
+  const total=allItems.filter(i=>!i.deleted).length;
+  const nearExp=allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3).length;
+  const byCat={}; for(const key in pantry) byCat[pantry[key].category]=0;
+  allItems.forEach(i=>{ if(!i.deleted && pantry[i.key]) byCat[pantry[i.key].category]++; });
+  analyticsContent.innerHTML='';
+  analyticsContent.appendChild(createAnalyticsCard('Total Items',total));
+  analyticsContent.appendChild(createAnalyticsCard('Near Expiry',nearExp));
+  for(const cat in byCat) analyticsContent.appendChild(createAnalyticsCard(cat,byCat[cat]));
+
+  // Daily Reminders
+  dailyRemindersDiv.innerHTML='';
+  allItems.filter(i=>!i.deleted).forEach(i=>{
+    const card=document.createElement('div'); card.className='reminder-card';
+    card.textContent=`${pantry[i.key]?.emoji||''} ${i.name} is lonely! Use it today 😸`;
+    dailyRemindersDiv.appendChild(card);
+  });
+}
+function createAnalyticsCard(title,val){ const c=document.createElement('div'); c.className='analytics-card'; c.innerHTML=`<h4>${title}</h4><p>${val}</p>`; return c; }
+
 // --- Add Item ---
 addBtn.onclick=()=>{
   const name=itemNameInput.value.trim();
@@ -203,9 +283,9 @@ addBtn.onclick=()=>{
   const today=new Date();
   let expiry;
 
-  // NEW leftover detection (always 3 days)
-  if(key && ["sambar","rasam","curd rice","biryani","paneer butter masala","dal tadka","rajma","chole"].includes(key)){
-    expiry=new Date();
+  /* NEW: leftover detection has priority and forces 3 days */
+  if(key && leftovers.includes(key)){
+    expiry = new Date();
     expiry.setDate(today.getDate()+3);
   }
   else if(expiryInput.value) expiry=new Date(expiryInput.value);
@@ -222,8 +302,43 @@ addBtn.onclick=()=>{
   playReminderSound();
 };
 
-// (rest of your render + panel switch + analytics + notifications code stays unchanged…)
+// --- Panel Switch ---
+homeBtn.onclick=()=>{ currentPanel='home'; renderCurrentPanel(); }
+expiryBtn.onclick=()=>{ currentPanel='expiry'; renderCurrentPanel(); }
+recipesBtn.onclick=()=>{ currentPanel='recipes'; renderCurrentPanel(); }
+trashBtn.onclick=()=>{ currentPanel='trash'; renderCurrentPanel(); }
+analyticsBtn.onclick=()=>{ currentPanel='analytics'; renderCurrentPanel(); }
+categoriesBtn.onclick=()=>{ categorySubmenu.style.display=categorySubmenu.style.display==='flex'?'none':'flex'; }
+categorySubmenu.querySelectorAll('button[data-cat]').forEach(btn=>{
+  btn.onclick=()=>{ const cat=btn.getAttribute('data-cat'); currentPanel='categories'; renderCurrentPanel(); itemList.innerHTML=''; allItems.filter(i=>!i.deleted && pantry[i.key]?.category===cat).forEach(i=>itemList.appendChild(renderItem(i))); };
+});
+toggleMenu.onclick=()=>{ sidebar.classList.toggle('show'); }
+toggleAnalytics.onclick=()=>{ analyticsContent.style.display=analyticsContent.style.display==='flex'?'none':'flex'; }
+
+// --- Test Notification ---
+testNotifBtn.onclick=()=>notifyDevice('FridgeMind','This is a test notification!');
+
+// --- Near Expiry Notifications Twice Daily ---
+function scheduleExpiryNotifications(){
+  const nearExpItems=allItems.filter(i=>!i.deleted && daysUntil(i.expiry)<=3);
+  nearExpItems.forEach(i=>{
+    const msg=`${i.name} is near expiry ⚠️`;
+    notifyDevice('FridgeMind',msg);
+    playReminderSound();
+  });
+}
+
+// --- Init ---
+if(Notification.permission!=='granted') Notification.requestPermission();
+renderCurrentPanel();
+
+// Schedule twice daily at 9am and 6pm
+setInterval(()=>{
+  const now=new Date();
+  if(now.getHours()===9 || now.getHours()===18) scheduleExpiryNotifications();
+},60*60*1000); // checks hourly
 </script>
+
 </body>
 </html>
 
