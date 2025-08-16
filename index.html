@@ -123,53 +123,37 @@ const pantry = {
   "mango": { emoji:"🥭", recipes:["Mango Lassi","Mango Pickle"], expiry:5, category:"Fruits" },
   "apple": { emoji:"🍎", recipes:["Apple Halwa","Apple Juice"], expiry:10, category:"Fruits" },
 
-  /* --- Added regional staples (South + North) --- */
-  "beans": { emoji:"🫘", recipes:["Beans Poriyal","Beans Thoran"], expiry:6, category:"Vegetables" },
-  "bhindi": { emoji:"🌿", recipes:["Bhindi Masala","Vendakkai Fry"], expiry:5, category:"Vegetables" },
-  "okra":   { emoji:"🌿", recipes:["Bhindi Masala","Vendakkai Fry"], expiry:5, category:"Vegetables" }, /* alias item */
-  "cabbage": { emoji:"🥬", recipes:["Cabbage Poriyal","Patta Gobhi Sabzi"], expiry:7, category:"Vegetables" },
-  "cauliflower": { emoji:"🥦", recipes:["Gobi 65","Aloo Gobi"], expiry:6, category:"Vegetables" },
-  "green peas": { emoji:"🟢", recipes:["Peas Masala","Matar Paneer"], expiry:5, category:"Vegetables" },
-  "coriander": { emoji:"🌿", recipes:["Garnish","Chutney"], expiry:4, category:"Vegetables" },
-
-  "wheat flour": { emoji:"🌾", recipes:["Chapati","Paratha"], expiry:90, category:"Grains" },
-  "rava": { emoji:"🥣", recipes:["Upma","Rava Dosa"], expiry:120, category:"Grains" },
-  "poha": { emoji:"🥣", recipes:["Aval Upma","Poha"], expiry:120, category:"Grains" },
-  "idli rice": { emoji:"🍚", recipes:["Idli","Dosa"], expiry:180, category:"Grains" },
-
-  "ghee": { emoji:"🧈", recipes:["Kesari","Dal Tadka"], expiry:30, category:"Dairy" },
-  "butter": { emoji:"🧈", recipes:["Butter Naan","Butter Paneer"], expiry:20, category:"Dairy" },
-  "yogurt": { emoji:"🥛", recipes:["Raita","Buttermilk"], expiry:5, category:"Dairy" },
-
-  "banana": { emoji:"🍌", recipes:["Banana Fritters","Banana Milkshake"], expiry:5, category:"Fruits" },
-
-  "chicken": { emoji:"🍗", recipes:["Chicken Curry","Butter Chicken"], expiry:3, category:"Other" },
-  "fish": { emoji:"🐟", recipes:["Fish Fry","Fish Curry"], expiry:2, category:"Other" },
-  "mutton": { emoji:"🍖", recipes:["Mutton Curry","Mutton Biryani"], expiry:3, category:"Other" },
-
-  /* --- Leftovers (always 3 days) --- */
-  "sambar": { emoji:"🥣", recipes:["Reheat Sambar","Sambar Idli"], expiry:3, category:"Other" },
-  "rasam": { emoji:"🥣", recipes:["Reheat Rasam"], expiry:3, category:"Other" },
+  /* --- Added per your request: 10 South/North items (all under 'Other'), leftovers expire in 3 days --- */
+  "idli batter": { emoji:"🥞", recipes:["Steam Idlis","Uthappam"], expiry:3, category:"Other" },
+  "dosa batter": { emoji:"🥞", recipes:["Make Dosa","Uthappam"], expiry:3, category:"Other" },
+  "sambar": { emoji:"🥣", recipes:["Reheat Sambar","Mini Idli Sambar"], expiry:3, category:"Other" },
+  "rasam": { emoji:"🍲", recipes:["Reheat Rasam","Rasam Rice"], expiry:3, category:"Other" },
   "curd rice": { emoji:"🍚", recipes:["Reheat Curd Rice"], expiry:3, category:"Other" },
-  "biryani": { emoji:"🍛", recipes:["Reheat Biryani"], expiry:3, category:"Other" },
   "paneer butter masala": { emoji:"🍲", recipes:["Reheat Paneer Butter Masala"], expiry:3, category:"Other" },
   "dal tadka": { emoji:"🥘", recipes:["Reheat Dal Tadka"], expiry:3, category:"Other" },
-  "rajma": { emoji:"🥘", recipes:["Reheat Rajma"], expiry:3, category:"Other" },
-  "chole": { emoji:"🥘", recipes:["Reheat Chole"], expiry:3, category:"Other" }
+  "rajma": { emoji:"🫘", recipes:["Reheat Rajma"], expiry:3, category:"Other" },
+  "chole": { emoji:"🍛", recipes:["Reheat Chole"], expiry:3, category:"Other" },
+  "roti": { emoji:"🥯", recipes:["Reheat Roti","Make Rolls"], expiry:2, category:"Other" },
+  "chapati": { emoji:"🥯", recipes:["Reheat Chapati","Make Rolls"], expiry:2, category:"Other" }
 };
-const aliases = {
-  "tomatoes":"tomato","potatoes":"potato",
-  "lady finger":"bhindi","vendakkai":"bhindi","okra":"bhindi",
-  "curdrice":"curd rice","idly rice":"idli rice","semolina":"rava","sooji":"rava","suji":"rava",
-  "matar":"green peas","gobhi":"cauliflower","patta gobhi":"cabbage"
+/* Aliases (kept original + added variants for your 10 items) */
+const aliases = { 
+  "tomatoes":"tomato",
+  "potatoes":"potato",
+  "idly batter":"idli batter",
+  "idlly batter":"idli batter",
+  "dosai batter":"dosa batter",
+  "chapathi":"chapati",
+  "chapatti":"chapati",
+  "rotis":"roti"
 };
-
-/* NEW: leftover keys list (for quick check) */
-const leftovers = ["sambar","rasam","curd rice","biryani","paneer butter masala","dal tadka","rajma","chole"];
 
 let allItems = JSON.parse(localStorage.getItem('allItems')||'[]');
 let trash = JSON.parse(localStorage.getItem('trash')||'[]');
 let currentPanel = 'home';
+
+/* Added set for leftover names to auto-enforce 3-day expiry regardless of manual date */
+const leftoverKeys = new Set(["idli batter","dosa batter","sambar","rasam","curd rice","paneer butter masala","dal tadka","rajma","chole"]);
 
 // UI refs
 const sidebar = document.getElementById('sidebar');
@@ -283,16 +267,26 @@ addBtn.onclick=()=>{
   const today=new Date();
   let expiry;
 
-  /* NEW: leftover detection has priority and forces 3 days */
-  if(key && leftovers.includes(key)){
-    expiry = new Date();
-    expiry.setDate(today.getDate()+3);
+  /* Logic tweak: leftovers always auto-expire in 3 days (ignores manual date to keep you safe) */
+  if(key && leftoverKeys.has(key)){
+    expiry=new Date(); 
+    expiry.setDate(today.getDate()+pantry[key].expiry); // 3 days
+  } else if(expiryInput.value) {
+    expiry=new Date(expiryInput.value);
+  } else if(key && pantry[key]){ 
+    expiry=new Date(); 
+    expiry.setDate(today.getDate()+pantry[key].expiry); 
+  } else { 
+    expiry=today; 
+    expiry.setDate(today.getDate()+7); 
   }
-  else if(expiryInput.value) expiry=new Date(expiryInput.value);
-  else if(key && pantry[key]){ expiry=new Date(); expiry.setDate(today.getDate()+pantry[key].expiry); }
-  else{ expiry=today; expiry.setDate(today.getDate()+7); }
 
-  const obj={ name, key, expiry:expiry.toISOString().split('T')[0], deleted:false };
+  const obj={ 
+    name, 
+    key, 
+    expiry:expiry.toISOString().split('T')[0], 
+    deleted:false 
+  };
   allItems.push(obj);
   saveData();
   showToast(`Added ${name} ✅`);
