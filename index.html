@@ -75,7 +75,29 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
     <button data-cat="Dairy">🥛 Dairy</button>
     <button data-cat="Grains">🍚 Grains</button>
     <button data-cat="Other">🍲 Other</button>
+  
+  <!-- PROFILE SECTION -->
+  <button id="profileBtn">👤 Profile</button>
+  <div id="profilePanel" style="display:none; flex-direction:column; gap:12px; padding:10px; background:#fff; border-radius:12px; margin-top:10px;">
+    <div style="text-align:center;">
+      <div id="profileAvatar" style="font-size:40px;">🐶</div>
+      <div id="profileName" style="font-weight:700; font-size:16px; margin-top:4px;">Guest</div>
+      <div id="profileEmail" style="font-size:13px; color:#666;">guest@example.com</div>
+    </div>
+    <input id="nameInput" type="text" placeholder="Enter your name 📝" />
+    <input id="emailInput" type="text" placeholder="Enter email 📧" />
+    <select id="avatarSelect">
+      <option value="🐶">🐶 Dog</option>
+      <option value="🐱">🐱 Cat</option>
+      <option value="🐰">🐰 Rabbit</option>
+      <option value="🐦">🐦 Bird</option>
+      <option value="🐢">🐢 Turtle</option>
+    </select>
+    <button id="saveProfileBtn" class="secondary">💾 Save Profile</button>
+    <button id="logoutBtn" class="delete">🚪 Logout</button>
   </div>
+
+</div>
   <button id="expiryBtn">⚠️ Near Expiry</button>
   <button id="recipesBtn">🍳 Recipe Suggestions</button>
   <button id="analyticsBtn">📊 Analytics & Stats</button>
@@ -106,7 +128,57 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js">
+// --- Profile Feature ---
+const profileBtn = document.getElementById('profileBtn');
+const profilePanel = document.getElementById('profilePanel');
+const profileName = document.getElementById('profileName');
+const profileAvatar = document.getElementById('profileAvatar');
+const profileEmail = document.getElementById('profileEmail');
+const nameInput = document.getElementById('nameInput');
+const emailInput = document.getElementById('emailInput');
+const avatarSelect = document.getElementById('avatarSelect');
+const saveProfileBtn = document.getElementById('saveProfileBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Load profile from localStorage
+let userProfile = JSON.parse(localStorage.getItem('userProfile') || 
+  '{"name":"Guest","email":"guest@example.com","avatar":"🐶"}');
+
+function renderProfile(){
+  profileName.textContent = userProfile.name;
+  profileEmail.textContent = userProfile.email;
+  profileAvatar.textContent = userProfile.avatar;
+  nameInput.value = userProfile.name;
+  emailInput.value = userProfile.email;
+  avatarSelect.value = userProfile.avatar;
+}
+renderProfile();
+
+// Toggle profile panel
+profileBtn.onclick = () => {
+  profilePanel.style.display = profilePanel.style.display === 'flex' ? 'none' : 'flex';
+};
+
+// Save profile
+saveProfileBtn.onclick = () => {
+  userProfile.name = nameInput.value || "Guest";
+  userProfile.email = emailInput.value || "guest@example.com";
+  userProfile.avatar = avatarSelect.value;
+  localStorage.setItem('userProfile', JSON.stringify(userProfile));
+  renderProfile();
+  showToast("Profile saved ✅");
+};
+
+// Logout
+logoutBtn.onclick = () => {
+  localStorage.removeItem('userProfile');
+  userProfile = {name:"Guest", email:"guest@example.com", avatar:"🐶"};
+  renderProfile();
+  showToast("Logged out 🚪");
+};
+
+</script>
 <script>
 // Pantry data
 const pantry = {
@@ -335,6 +407,8 @@ setInterval(()=>{
 
 </body>
 </html>
+
+
 
 
 
