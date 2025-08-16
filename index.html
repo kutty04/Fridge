@@ -1,255 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FridgeMind — Dashboard</title>
-  <style>
-    :root{
-      --bg-main:#E6E6FA; /* lavender */
-      --card:#F7F4FA;
-      --pink:#FFB6C1;
-      --green:#98FB98;
-      --blue:#ADD8E6;
-      --yellow:#FFFACD;
-      --red:#FF7F7F;
-    }
-    body{
-      font-family: Arial, sans-serif;
-      margin:0;
-      background:var(--bg-main);
-      display:flex;
-    }
-    .sidebar{
-      width:220px;
-      background:var(--pink);
-      padding:20px;
-      height:100vh;
-      position:fixed;
-      left:0;
-      top:0;
-      display:flex;
-      flex-direction:column;
-    }
-    .sidebar button{
-      background:var(--card);
-      border:none;
-      padding:10px;
-      margin:10px 0;
-      border-radius:12px;
-      cursor:pointer;
-    }
-    .content{
-      margin-left:240px;
-      padding:20px;
-      width:calc(100% - 240px);
-    }
-    .card{
-      background:var(--card);
-      border-radius:16px;
-      padding:15px;
-      margin-bottom:20px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    }
-    .near-expiry{
-      border:2px solid var(--red);
-    }
-    .badge{
-      background:var(--red);
-      color:white;
-      padding:2px 8px;
-      border-radius:12px;
-      font-size:12px;
-      margin-left:10px;
-    }
-    .recipe-card{
-      background:var(--yellow);
-      padding:10px;
-      border-radius:12px;
-      margin:10px 0;
-    }
-    .recipe-card a{
-      text-decoration:none;
-      color:#333;
-      font-weight:bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FridgeMind</title>
+<style>
+  :root {
+    --lavender:#E6E6FA;
+    --card:#F7F4FA;
+    --pink:#FFB6C1;
+    --mint:#C1FFD7;
+    --blue:#B3E5FC;
+    --yellow:#FFF9C4;
+    --red:#FF6B6B;
+  }
+  body {
+    margin:0;
+    font-family: "Comic Sans MS", sans-serif;
+    background: var(--lavender);
+    color:#333;
+  }
+  header {
+    background: var(--pink);
+    padding:15px;
+    text-align:center;
+    font-size:1.5em;
+    font-weight:bold;
+    border-bottom:3px solid #fff;
+  }
+  .container {
+    display:flex;
+  }
+  nav {
+    width:220px;
+    background: var(--card);
+    padding:15px;
+    border-right:3px solid #fff;
+  }
+  nav button {
+    display:block;
+    width:100%;
+    margin:8px 0;
+    padding:10px;
+    border:none;
+    border-radius:12px;
+    font-size:1em;
+    background: var(--blue);
+    cursor:pointer;
+  }
+  nav button:hover {background: var(--mint);}
+  main {
+    flex:1;
+    padding:20px;
+  }
+  .card {
+    background: var(--card);
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+    box-shadow:0 4px 8px rgba(0,0,0,0.1);
+  }
+  .badge {
+    display:inline-block;
+    background: var(--red);
+    color:white;
+    padding:3px 8px;
+    border-radius:12px;
+    font-size:0.8em;
+    margin-left:10px;
+  }
+  .recipe-link {
+    display:block;
+    margin-top:5px;
+    color:#333;
+    text-decoration:none;
+    background: var(--yellow);
+    padding:6px 10px;
+    border-radius:10px;
+    width:max-content;
+  }
+  /* Overlay modal */
+  #overlay {
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+  }
+  #overlay .modal {
+    background: var(--card);
+    padding:20px;
+    border-radius:20px;
+    width:80%;
+    max-width:600px;
+    box-shadow:0 6px 12px rgba(0,0,0,0.2);
+    position:relative;
+  }
+  #overlay iframe {
+    width:100%;
+    height:315px;
+    border:none;
+    border-radius:12px;
+  }
+  #overlay .close {
+    position:absolute;
+    top:10px;
+    right:15px;
+    font-size:1.2em;
+    cursor:pointer;
+    color:#333;
+  }
+</style>
 </head>
 <body>
-  <div class="sidebar">
-    <button onclick="showSection('home')">🏠 Home</button>
-    <button onclick="showSection('categories')">📦 Categories</button>
-    <button onclick="showSection('nearExpiry')">⏳ Near Expiry</button>
-    <button onclick="showSection('recipes')">🍳 Recipes</button>
-    <button onclick="showSection('trash')">🗑️ Trash</button>
-    <button onclick="showSection('analytics')">📊 Analytics</button>
+  <header>🌸 FridgeMind — Cute Food Tracker 🌸</header>
+  <div class="container">
+    <nav>
+      <button onclick="showPage('home')">🏠 Home</button>
+      <button onclick="showPage('categories')">📦 Categories</button>
+      <button onclick="showPage('expiry')">⏳ Near Expiry</button>
+      <button onclick="showPage('recipes')">🍳 Recipes</button>
+      <button onclick="showPage('analytics')">📊 Analytics</button>
+      <button onclick="showPage('trash')">🗑️ Trash</button>
+    </nav>
+    <main id="content">
+      <!-- dynamic pages -->
+    </main>
   </div>
 
-  <div class="content">
-    <div id="home" class="section">
-      <h2>Welcome to FridgeMind 💜</h2>
-      <div>
-        <input id="itemName" placeholder="Enter item name">
-        <input id="expiryDate" type="date">
-        <button onclick="addItem()">➕ Add</button>
-      </div>
-      <div id="itemsList"></div>
-    </div>
-
-    <div id="categories" class="section" style="display:none">
-      <h2>📦 Categories</h2>
-      <div id="categoriesList"></div>
-    </div>
-
-    <div id="nearExpiry" class="section" style="display:none">
-      <h2>⏳ Near Expiry</h2>
-      <div id="nearExpiryList"></div>
-    </div>
-
-    <div id="recipes" class="section" style="display:none">
-      <h2>🍳 Recipes for Your Near Expiry Items</h2>
-      <div id="recipeList"></div>
-    </div>
-
-    <div id="trash" class="section" style="display:none">
-      <h2>🗑️ Trash</h2>
-      <div id="trashList"></div>
-    </div>
-
-    <div id="analytics" class="section" style="display:none">
-      <h2>📊 Analytics</h2>
-      <div id="analyticsBox">Coming soon 💜</div>
+  <!-- Recipe Overlay -->
+  <div id="overlay">
+    <div class="modal">
+      <span class="close" onclick="closeOverlay()">✖</span>
+      <iframe id="recipePlayer" src="" allowfullscreen></iframe>
     </div>
   </div>
 
-  <script>
-    let items = JSON.parse(localStorage.getItem('fridgeItems')) || [];
-    let trash = [];
+<script>
+let pages = {
+  home:`<div class="card"><h2>Welcome! 💖</h2><p>Track your food, reduce waste, and stay cute!</p></div>`,
+  categories:`<div class="card"><h2>📦 Categories</h2><p>South Indian, North Indian pantry & leftovers detected.</p></div>`,
+  expiry:`<div class="card"><h2>⏳ Near Expiry</h2>
+           <div class="item-card">Milk <span class="badge">Near Expiry</span>
+             <a href="#" class="recipe-link" onclick="openOverlay('https://www.youtube.com/embed/QRxH-IIy9y0')">🥛 Make Paneer</a>
+             <a href="#" class="recipe-link" onclick="openOverlay('https://www.youtube.com/embed/oHg5SJYRHA0')">🍨 Ice Cream</a>
+           </div>
+           <div class="item-card">Curd <span class="badge">Near Expiry</span>
+             <a href="#" class="recipe-link" onclick="openOverlay('https://www.youtube.com/embed/BoEKWtgJQAU')">🍲 Kadhi</a>
+             <a href="#" class="recipe-link" onclick="openOverlay('https://www.youtube.com/embed/dQw4w9WgXcQ')">🥒 Raita</a>
+           </div>
+           </div>`,
+  recipes:`<div class="card"><h2>🍳 Recipes</h2><p>Click near expiry items to view recipes 🎥</p></div>`,
+  analytics:`<div class="card"><h2>📊 Analytics</h2><p>🥕 Carrots are lonely! Use them today 😸</p><p>Track waste stats here.</p></div>`,
+  trash:`<div class="card"><h2>🗑️ Trash</h2><p>Deleted items will appear here with restore option.</p></div>`
+};
 
-    const expiryDefaults = {
-      milk: 3,
-      curd: 3,
-      bread: 5,
-      tomato: 5,
-      rice: 30,
-      dal: 20
-    };
+function showPage(name){
+  document.getElementById('content').innerHTML = pages[name];
+}
 
-    const recipeDatabase = {
-      milk: [
-        {name:"Paneer Butter Masala", link:"https://www.youtube.com/watch?v=Gh2x2tq6s2A"},
-        {name:"Curd Rice", link:"https://www.youtube.com/watch?v=YhA9dRMbD3Q"}
-      ],
-      bread: [
-        {name:"Bread Pizza", link:"https://www.youtube.com/watch?v=TDlJ6z4z5yM"},
-        {name:"Bread Upma", link:"https://www.youtube.com/watch?v=kzOZsYpVrk0"}
-      ],
-      tomato: [
-        {name:"Tomato Soup", link:"https://www.youtube.com/watch?v=FhBqgJk6oxg"},
-        {name:"Tomato Chutney", link:"https://www.youtube.com/watch?v=OY-rI3Th9EI"}
-      ]
-    };
+// Overlay functions
+function openOverlay(url){
+  document.getElementById('overlay').style.display="flex";
+  document.getElementById('recipePlayer').src = url;
+}
+function closeOverlay(){
+  document.getElementById('overlay').style.display="none";
+  document.getElementById('recipePlayer').src = "";
+}
 
-    function saveItems(){
-      localStorage.setItem('fridgeItems', JSON.stringify(items));
-    }
-
-    function addItem(){
-      let name = document.getElementById('itemName').value.trim().toLowerCase();
-      let expiryInput = document.getElementById('expiryDate').value;
-      let expiry = expiryInput ? new Date(expiryInput) : new Date(Date.now() + (expiryDefaults[name]||7)*86400000);
-
-      if(name){
-        items.push({name, expiry: expiry.toISOString()});
-        saveItems();
-        renderItems();
-        document.getElementById('itemName').value="";
-        document.getElementById('expiryDate').value="";
-      }
-    }
-
-    function renderItems(){
-      let list = document.getElementById('itemsList');
-      list.innerHTML="";
-      items.forEach((item, i)=>{
-        let expDate = new Date(item.expiry);
-        let diff = Math.ceil((expDate - new Date())/86400000);
-        let div = document.createElement('div');
-        div.className = "card" + (diff<=2?" near-expiry":"");
-        div.innerHTML = `${item.name} <span class="badge">${diff} days left</span> <button onclick="deleteItem(${i})">🗑️</button>`;
-        list.appendChild(div);
-      });
-      renderNearExpiry();
-    }
-
-    function renderNearExpiry(){
-      let list = document.getElementById('nearExpiryList');
-      list.innerHTML="";
-      items.forEach(item=>{
-        let expDate = new Date(item.expiry);
-        let diff = Math.ceil((expDate - new Date())/86400000);
-        if(diff<=2){
-          let div = document.createElement('div');
-          div.className="card near-expiry";
-          div.innerHTML = `${item.name} expires in ${diff} days`;
-          list.appendChild(div);
-        }
-      });
-      renderRecipes();
-    }
-
-    function renderRecipes(){
-      let list = document.getElementById('recipeList');
-      list.innerHTML="";
-      items.forEach(item=>{
-        let expDate = new Date(item.expiry);
-        let diff = Math.ceil((expDate - new Date())/86400000);
-        if(diff<=2 && recipeDatabase[item.name]){
-          let recs = recipeDatabase[item.name];
-          recs.forEach(r=>{
-            let div = document.createElement('div');
-            div.className="recipe-card";
-            div.innerHTML = `🍲 <a href="${r.link}" target="_blank">${r.name}</a> (using ${item.name})`;
-            list.appendChild(div);
-          });
-        }
-      });
-    }
-
-    function deleteItem(i){
-      trash.push(items[i]);
-      items.splice(i,1);
-      saveItems();
-      renderItems();
-      renderTrash();
-    }
-
-    function renderTrash(){
-      let list=document.getElementById('trashList');
-      list.innerHTML="";
-      trash.forEach((item,i)=>{
-        let div=document.createElement('div');
-        div.className="card";
-        div.innerHTML=`${item.name} <button onclick="restoreItem(${i})">♻️ Restore</button>`;
-        list.appendChild(div);
-      });
-    }
-
-    function restoreItem(i){
-      items.push(trash[i]);
-      trash.splice(i,1);
-      saveItems();
-      renderItems();
-      renderTrash();
-    }
-
-    function showSection(id){
-      document.querySelectorAll('.section').forEach(s=>s.style.display='none');
-      document.getElementById(id).style.display='block';
-    }
-
-    renderItems();
-  </script>
+// Default page
+showPage('home');
+</script>
 </body>
 </html>
+
 
