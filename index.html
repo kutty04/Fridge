@@ -75,7 +75,8 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
     <button data-cat="Dairy">🥛 Dairy</button>
     <button data-cat="Grains">🍚 Grains</button>
     <button data-cat="Other">🍲 Other</button>
-  
+  </div>
+
   <!-- PROFILE SECTION -->
   <button id="profileBtn">👤 Profile</button>
   <div id="profilePanel" style="display:none; flex-direction:column; gap:12px; padding:10px; background:#fff; border-radius:12px; margin-top:10px;">
@@ -97,7 +98,6 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
     <button id="logoutBtn" class="delete">🚪 Logout</button>
   </div>
 
-</div>
   <button id="expiryBtn">⚠️ Near Expiry</button>
   <button id="recipesBtn">🍳 Recipe Suggestions</button>
   <button id="analyticsBtn">📊 Analytics & Stats</button>
@@ -128,57 +128,7 @@ button:disabled{ opacity:.6; transform:none; cursor:default; }
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js">
-// --- Profile Feature ---
-const profileBtn = document.getElementById('profileBtn');
-const profilePanel = document.getElementById('profilePanel');
-const profileName = document.getElementById('profileName');
-const profileAvatar = document.getElementById('profileAvatar');
-const profileEmail = document.getElementById('profileEmail');
-const nameInput = document.getElementById('nameInput');
-const emailInput = document.getElementById('emailInput');
-const avatarSelect = document.getElementById('avatarSelect');
-const saveProfileBtn = document.getElementById('saveProfileBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-
-// Load profile from localStorage
-let userProfile = JSON.parse(localStorage.getItem('userProfile') || 
-  '{"name":"Guest","email":"guest@example.com","avatar":"🐶"}');
-
-function renderProfile(){
-  profileName.textContent = userProfile.name;
-  profileEmail.textContent = userProfile.email;
-  profileAvatar.textContent = userProfile.avatar;
-  nameInput.value = userProfile.name;
-  emailInput.value = userProfile.email;
-  avatarSelect.value = userProfile.avatar;
-}
-renderProfile();
-
-// Toggle profile panel
-profileBtn.onclick = () => {
-  profilePanel.style.display = profilePanel.style.display === 'flex' ? 'none' : 'flex';
-};
-
-// Save profile
-saveProfileBtn.onclick = () => {
-  userProfile.name = nameInput.value || "Guest";
-  userProfile.email = emailInput.value || "guest@example.com";
-  userProfile.avatar = avatarSelect.value;
-  localStorage.setItem('userProfile', JSON.stringify(userProfile));
-  renderProfile();
-  showToast("Profile saved ✅");
-};
-
-// Logout
-logoutBtn.onclick = () => {
-  localStorage.removeItem('userProfile');
-  userProfile = {name:"Guest", email:"guest@example.com", avatar:"🐶"};
-  renderProfile();
-  showToast("Logged out 🚪");
-};
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // Pantry data
 const pantry = {
@@ -393,6 +343,58 @@ function scheduleExpiryNotifications(){
     playReminderSound();
   });
 }
+
+
+
+// --- Profile Feature ---
+const profileBtn = document.getElementById('profileBtn');
+const profilePanel = document.getElementById('profilePanel');
+const profileName = document.getElementById('profileName');
+const profileAvatar = document.getElementById('profileAvatar');
+const profileEmail = document.getElementById('profileEmail');
+const nameInput = document.getElementById('nameInput');
+const emailInput = document.getElementById('emailInput');
+const avatarSelect = document.getElementById('avatarSelect');
+const saveProfileBtn = document.getElementById('saveProfileBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Load profile from localStorage
+let userProfile = JSON.parse(localStorage.getItem('userProfile') || 
+  '{"name":"Guest","email":"guest@example.com","avatar":"🐶"}');
+
+function renderProfile(){
+  profileName.textContent = userProfile.name;
+  profileEmail.textContent = userProfile.email;
+  profileAvatar.textContent = userProfile.avatar;
+  nameInput.value = userProfile.name;
+  emailInput.value = userProfile.email;
+  avatarSelect.value = userProfile.avatar;
+}
+renderProfile();
+
+// Toggle profile panel
+profileBtn.onclick = () => {
+  profilePanel.style.display = profilePanel.style.display === 'flex' ? 'none' : 'flex';
+};
+
+// Save profile
+saveProfileBtn.onclick = () => {
+  userProfile.name = nameInput.value || "Guest";
+  userProfile.email = emailInput.value || "guest@example.com";
+  userProfile.avatar = avatarSelect.value;
+  localStorage.setItem('userProfile', JSON.stringify(userProfile));
+  renderProfile();
+  showToast("Profile saved ✅");
+};
+
+// Logout
+logoutBtn.onclick = () => {
+  localStorage.removeItem('userProfile');
+  userProfile = {name:"Guest", email:"guest@example.com", avatar:"🐶"};
+  renderProfile();
+  showToast("Logged out 🚪");
+};
+
 
 // --- Init ---
 if(Notification.permission!=='granted') Notification.requestPermission();
